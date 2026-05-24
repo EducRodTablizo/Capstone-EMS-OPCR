@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* PUP Caloocan brand — deep maroon + gold */
+    --background: 220 20% 97%;
+    --foreground: 220 15% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 12%;
+
+    /* Maroon primary */
+    --primary: 345 72% 28%;
+    --primary-foreground: 0 0% 98%;
+
+    /* Gold secondary */
+    --secondary: 43 92% 47%;
+    --secondary-foreground: 30 30% 10%;
+
+    --muted: 220 15% 93%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 345 30% 92%;
+    --accent-foreground: 345 72% 28%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 345 72% 28%;
+
+    --radius: 0.5rem;
+
+    /* Status tokens */
+    --success: 142 71% 35%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 46%;
+    --warning-foreground: 30 30% 10%;
+    --info: 210 80% 50%;
+    --info-foreground: 0 0% 98%;
+
+    /* SLA compliance */
+    --compliant: 142 71% 35%;
+    --noncompliant: 0 72% 51%;
+    --pending: 38 92% 46%;
+
+    /* Sidebar */
+    --sidebar-bg: 345 72% 22%;
+    --sidebar-fg: 0 0% 92%;
+    --sidebar-accent: 345 60% 32%;
+    --sidebar-accent-fg: 0 0% 98%;
+    --sidebar-border: 345 50% 18%;
+  }
+
+  .dark {
+    --background: 220 20% 8%;
+    --foreground: 220 10% 92%;
+
+    --card: 220 20% 12%;
+    --card-foreground: 220 10% 92%;
+
+    --popover: 220 20% 12%;
+    --popover-foreground: 220 10% 92%;
+
+    --primary: 345 65% 50%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 43 80% 55%;
+    --secondary-foreground: 30 30% 10%;
+
+    --muted: 220 15% 18%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 345 30% 20%;
+    --accent-foreground: 345 65% 75%;
+
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 345 65% 50%;
+
+    --success: 142 60% 45%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 80% 55%;
+    --warning-foreground: 30 30% 10%;
+    --info: 210 70% 60%;
+    --info-foreground: 0 0% 98%;
+
+    --compliant: 142 60% 45%;
+    --noncompliant: 0 65% 55%;
+    --pending: 38 80% 55%;
+
+    --sidebar-bg: 345 70% 14%;
+    --sidebar-fg: 0 0% 90%;
+    --sidebar-accent: 345 50% 22%;
+    --sidebar-accent-fg: 0 0% 98%;
+    --sidebar-border: 345 45% 12%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .sla-compliant {
+    @apply bg-success/10 text-success border border-success/30;
+  }
+  .sla-noncompliant {
+    @apply bg-destructive/10 text-destructive border border-destructive/30;
+  }
+  .sla-pending {
+    @apply bg-warning/10 text-warning border border-warning/30;
+  }
+  .row-breach {
+    @apply bg-destructive/5 border-l-4 border-l-destructive;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+}
