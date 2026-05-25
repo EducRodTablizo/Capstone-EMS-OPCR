@@ -121,6 +121,7 @@ export async function createTransactionApi(
     is_sla_breached: false,
     client_name: dto.client_name,
     remarks: dto.remarks ?? null,
+    intake_data: dto.intake_data ?? null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }

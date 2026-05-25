@@ -159,6 +159,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     processing_time_seconds: 1860, sla_target_seconds: parseSlaToSeconds('22 min'),
     sla_status: 'non_compliant', is_sla_breached: true,
     client_name: 'Juan dela Torre', remarks: 'Referred to PGH',
+    intake_data: null,
     created_at: daysAgo(0, 2), updated_at: daysAgo(0, 1.5),
   },
   {
@@ -171,6 +172,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     processing_time_seconds: 360, sla_target_seconds: parseSlaToSeconds('8 min'),
     sla_status: 'compliant', is_sla_breached: false,
     client_name: 'Maria Gomez', remarks: null,
+    intake_data: null,
     created_at: daysAgo(0, 3), updated_at: daysAgo(0, 2.9),
   },
   {
@@ -183,6 +185,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     processing_time_seconds: null, sla_target_seconds: parseSlaToSeconds('30 min'),
     sla_status: 'pending_computation', is_sla_breached: false,
     client_name: 'Pedro Santos', remarks: null,
+    intake_data: null,
     created_at: daysAgo(0, 1), updated_at: daysAgo(0, 0.5),
   },
   {
@@ -195,6 +198,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     processing_time_seconds: null, sla_target_seconds: parseSlaToSeconds('12 min'),
     sla_status: 'pending_computation', is_sla_breached: false,
     client_name: 'BSIT Student Council', remarks: 'Waiting for documentary requirements',
+    intake_data: null,
     created_at: daysAgo(0, 0.5), updated_at: daysAgo(0, 0.5),
   },
   // Academic Office transactions
@@ -208,6 +212,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     processing_time_seconds: 1080, sla_target_seconds: parseSlaToSeconds('18 min'),
     sla_status: 'compliant', is_sla_breached: false,
     client_name: 'Ana Villanueva', remarks: null,
+    intake_data: null,
     created_at: daysAgo(1, 4), updated_at: daysAgo(1, 3.7),
   },
   {
@@ -220,6 +225,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     processing_time_seconds: null, sla_target_seconds: parseSlaToSeconds('27 min'),
     sla_status: 'pending_computation', is_sla_breached: false,
     client_name: 'Carlo Mendoza', remarks: 'Requirements submitted, pending dean approval',
+    intake_data: null,
     created_at: daysAgo(0, 2), updated_at: daysAgo(0, 1),
   },
   // OSAS transactions
@@ -233,6 +239,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     processing_time_seconds: 660, sla_target_seconds: parseSlaToSeconds('12 min'),
     sla_status: 'non_compliant', is_sla_breached: true,
     client_name: 'Rosa Aquino', remarks: 'Student had to retrieve additional form',
+    intake_data: null,
     created_at: daysAgo(0, 1), updated_at: daysAgo(0, 0.9),
   },
   {
@@ -245,6 +252,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     processing_time_seconds: null, sla_target_seconds: parseSlaToSeconds('44 min'),
     sla_status: 'pending_computation', is_sla_breached: false,
     client_name: 'Andres Navarro', remarks: null,
+    intake_data: null,
     created_at: daysAgo(0, 0.3), updated_at: daysAgo(0, 0.3),
   },
 ]

@@ -96,6 +96,7 @@ export interface Transaction {
   is_sla_breached: boolean
   client_name: string
   remarks: string | null
+  intake_data: Record<string, string> | null
   created_at: string
   updated_at: string
 }
@@ -132,6 +133,7 @@ export interface CreateTransactionDto {
   assigned_to?: string
   client_name: string
   remarks?: string
+  intake_data?: Record<string, string>
 }
 
 export interface UpdateTransactionStatusDto {

@@ -1,44 +1,60 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, Filter, ArrowRight } from 'lucide-react'
+import { Plus, Search, Filter, ArrowRight, CalendarDays } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
-import { getTransactionsApi, createTransactionApi, getServicesApi, getUsersApi } from '@/api/mockApi'
+import { getTransactionsApi, getServicesApi, getUsersApi } from '@/api/mockApi'
 import type { Transaction, Service, User, TransactionStatus } from '@/types'
 import { TopBar } from '@/components/layout/TopBar'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge, SLABadge, DocumentaryBadge } from '@/components/shared/StatusBadge'
+import { CreateTransactionDialog } from '@/components/transactions/CreateTransactionDialog'
 import { formatDateTime, formatDuration } from '@/utils/timeUtils'
-import { toast } from '@/hooks/useToast'
+import { computeSlaDueDate, getSlaDeadlineStatus, formatSlaDueDate } from '@/utils/workingCalendar'
 import { cn } from '@/utils/cn'
 
 type FilterStatus = 'all' | TransactionStatus
 
+// ── SLA Deadline cell ──────────────────────────────────────────────────────────
+function SlaDeadlineCell({
+  timeIn, slaTargetSeconds, status,
+}: {
+  timeIn: string
+  slaTargetSeconds: number
+  status: string
+}) {
+  const dueDate = computeSlaDueDate(timeIn, slaTargetSeconds)
+  const ds = getSlaDeadlineStatus(dueDate, status)
+
+  return (
+    <div className="space-y-1 min-w-[130px]">
+      <p className={cn(
+        'text-xs whitespace-nowrap',
+        ds === 'overdue'   ? 'text-destructive font-medium' :
+        ds === 'completed' ? 'text-muted-foreground' :
+        'text-foreground',
+      )}>
+        {formatSlaDueDate(dueDate)}
+      </p>
+      {ds === 'overdue'   && <Badge variant="destructive" className="text-[10px] py-0 px-1.5 h-4">Overdue</Badge>}
+      {ds === 'due_today' && <Badge variant="warning"     className="text-[10px] py-0 px-1.5 h-4">Due Today</Badge>}
+    </div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 export function TransactionsPage() {
   const { user } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [officeUsers, setOfficeUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
-
-  // Filters
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
-
-  // Create dialog
   const [createOpen, setCreateOpen] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [form, setForm] = useState({
-    service_id: '',
-    assigned_to: '',
-    client_name: '',
-    remarks: '',
-  })
 
   const isReadOnly = user?.role === 'opcr_evaluator'
 
@@ -63,35 +79,12 @@ export function TransactionsPage() {
     return matchSearch && matchStatus
   })
 
-  async function handleCreate() {
-    if (!user || !form.service_id || !form.client_name.trim()) return
-    setCreating(true)
-    try {
-      const newTxn = await createTransactionApi(
-        {
-          service_id: form.service_id,
-          assigned_to: form.assigned_to || undefined,
-          client_name: form.client_name.trim(),
-          remarks: form.remarks.trim() || undefined,
-        },
-        user,
-      )
-      setTransactions((prev) => [newTxn, ...prev])
-      setCreateOpen(false)
-      setForm({ service_id: '', assigned_to: '', client_name: '', remarks: '' })
-      toast({ title: 'Transaction created', description: `Time-in recorded: ${formatDateTime(newTxn.time_in)}`, variant: 'success' })
-    } catch (err) {
-      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to create', variant: 'destructive' })
-    } finally {
-      setCreating(false)
-    }
-  }
-
   return (
     <div className="flex flex-col h-full">
       <TopBar title="Service Transactions" subtitle="EMS-004 · 005 · 006 · 007" />
 
       <div className="flex-1 p-6 space-y-4 overflow-auto">
+
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-48">
@@ -125,7 +118,6 @@ export function TransactionsPage() {
           )}
         </div>
 
-        {/* Counts */}
         <p className="text-xs text-muted-foreground">
           Showing {filtered.length} of {transactions.length} transactions
           {isReadOnly && ' · Read-only (OPCR Evaluator)'}
@@ -150,6 +142,12 @@ export function TransactionsPage() {
                       <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Status</th>
                       <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Documents</th>
                       <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">SLA</th>
+                      <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          SLA Deadline
+                        </div>
+                      </th>
                       <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Duration</th>
                       <th className="px-4 py-3" />
                     </tr>
@@ -157,7 +155,7 @@ export function TransactionsPage() {
                   <tbody>
                     {filtered.length === 0 && (
                       <tr>
-                        <td colSpan={9} className="text-center py-12 text-muted-foreground text-sm">
+                        <td colSpan={10} className="text-center py-12 text-muted-foreground text-sm">
                           No transactions found.
                         </td>
                       </tr>
@@ -188,6 +186,13 @@ export function TransactionsPage() {
                         <td className="px-4 py-3">
                           <SLABadge status={t.sla_status} isBreached={t.is_sla_breached} />
                         </td>
+                        <td className="px-4 py-3">
+                          <SlaDeadlineCell
+                            timeIn={t.time_in}
+                            slaTargetSeconds={t.sla_target_seconds}
+                            status={t.status}
+                          />
+                        </td>
                         <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                           {t.processing_time_seconds !== null
                             ? formatDuration(t.processing_time_seconds)
@@ -213,83 +218,16 @@ export function TransactionsPage() {
       </div>
 
       {/* Create Transaction Dialog — EMS-004 */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>New Service Transaction</DialogTitle>
-            <DialogDescription>
-              EMS-004: Time-in is automatically recorded upon creation.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Service *</Label>
-              <Select value={form.service_id} onValueChange={(v) => setForm({ ...form, service_id: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a service…" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {services.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      <span className="flex flex-col">
-                        <span>{s.name}</span>
-                        <span className="text-xs text-muted-foreground">{s.category} · SLA: {s.sla_display}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Client Name *</Label>
-              <Input
-                placeholder="Enter client name…"
-                value={form.client_name}
-                onChange={(e) => setForm({ ...form, client_name: e.target.value })}
-              />
-            </div>
-
-            {/* EMS-005: Assign to same-office staff */}
-            <div className="space-y-1.5">
-              <Label>Assign To (EMS-005)</Label>
-              <Select value={form.assigned_to} onValueChange={(v) => setForm({ ...form, assigned_to: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Unassigned" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
-                  {officeUsers.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>{u.name} ({u.role === 'subsystem_admin' ? 'Admin' : 'Staff'})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">Only staff within your office can be assigned (EMS-005)</p>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Remarks</Label>
-              <Textarea
-                placeholder="Optional remarks…"
-                value={form.remarks}
-                onChange={(e) => setForm({ ...form, remarks: e.target.value })}
-                rows={2}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button
-              onClick={handleCreate}
-              disabled={creating || !form.service_id || !form.client_name.trim()}
-            >
-              {creating ? 'Creating…' : 'Create & Record Time-In'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {user && !isReadOnly && (
+        <CreateTransactionDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          services={services}
+          officeUsers={officeUsers}
+          currentUser={user}
+          onCreated={(txn) => setTransactions((prev) => [txn, ...prev])}
+        />
+      )}
     </div>
   )
 }

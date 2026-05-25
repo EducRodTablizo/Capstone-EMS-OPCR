@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Activity, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,8 +48,13 @@ export function LoginPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary mb-4">
-            <Activity className="w-7 h-7 text-primary-foreground" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white border-4 border-primary/20 shadow-md mb-4">
+            <img
+              src="https://grazia-prod.oss-ap-southeast-1.aliyuncs.com/resources/uid_100017370/757bc6c1-305f-4e.png"
+              alt="PUP Logo"
+              className="w-16 h-16 object-contain"
+              crossOrigin="anonymous"
+            />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Evaluation &</h1>
           <h1 className="text-2xl font-bold text-foreground">Monitoring System</h1>

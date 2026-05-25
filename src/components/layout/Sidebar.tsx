@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, ClipboardList, Clock, LogOut, Activity,
+  LayoutDashboard, Users, ClipboardList, Clock, LogOut,
 } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { cn } from '@/utils/cn'
@@ -24,9 +24,12 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-6 py-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
-            <Activity className="w-5 h-5 text-secondary-foreground" />
-          </div>
+          <img
+            src="https://grazia-prod.oss-ap-southeast-1.aliyuncs.com/resources/uid_100017370/757bc6c1-305f-4e.png"
+            alt="PUP Logo"
+            className="w-9 h-9 rounded-full object-contain bg-white shrink-0"
+            crossOrigin="anonymous"
+          />
           <div>
             <p className="text-sidebar-foreground font-bold text-sm leading-tight">EMS</p>
             <p className="text-sidebar-foreground/60 text-[10px] leading-tight">PUP Caloocan</p>
