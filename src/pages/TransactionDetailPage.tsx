@@ -136,10 +136,10 @@ export function TransactionDetailPage() {
     : null
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       <TopBar title="Transaction Detail" subtitle={`ID: ${txn.id}`} />
 
-      <div className="flex-1 p-6 overflow-auto">
+      <div className="flex-1 min-h-0 overflow-auto p-6">
         <Link to="/transactions" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors">
           <ArrowLeft className="h-4 w-4" />
           Back to Transactions

@@ -2,19 +2,16 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Search, Filter, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
-import { getTransactionsApi, createTransactionApi, getServicesApi, getUsersApi } from '@/api/mockApi'
-import type { Transaction, Service, User, TransactionStatus } from '@/types'
+import { getTransactionsApi, getServicesApi } from '@/api/mockApi'
+import type { Transaction, Service, TransactionStatus } from '@/types'
 import { TopBar } from '@/components/layout/TopBar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge, SLABadge, DocumentaryBadge } from '@/components/shared/StatusBadge'
+import { TransactionModal } from '@/components/transactions/TransactionModal'
 import { formatDateTime, formatDuration } from '@/utils/timeUtils'
-import { toast } from '@/hooks/useToast'
 import { cn } from '@/utils/cn'
 
 type FilterStatus = 'all' | TransactionStatus
@@ -23,7 +20,6 @@ export function TransactionsPage() {
   const { user } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [services, setServices] = useState<Service[]>([])
-  const [officeUsers, setOfficeUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
 
   // Filters
@@ -32,13 +28,6 @@ export function TransactionsPage() {
 
   // Create dialog
   const [createOpen, setCreateOpen] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [form, setForm] = useState({
-    service_id: '',
-    assigned_to: '',
-    client_name: '',
-    remarks: '',
-  })
 
   const isReadOnly = user?.role === 'opcr_evaluator'
 
@@ -47,11 +36,9 @@ export function TransactionsPage() {
     Promise.all([
       getTransactionsApi(officeId),
       getServicesApi(user?.office_id),
-      getUsersApi(user?.office_id),
-    ]).then(([txns, svcs, users]) => {
+    ]).then(([txns, svcs]) => {
       setTransactions(txns)
       setServices(svcs)
-      setOfficeUsers(users.filter((u) => u.role !== 'opcr_evaluator'))
     }).finally(() => setLoading(false))
   }, [user])
 
@@ -62,30 +49,6 @@ export function TransactionsPage() {
     const matchStatus = filterStatus === 'all' || t.status === filterStatus
     return matchSearch && matchStatus
   })
-
-  async function handleCreate() {
-    if (!user || !form.service_id || !form.client_name.trim()) return
-    setCreating(true)
-    try {
-      const newTxn = await createTransactionApi(
-        {
-          service_id: form.service_id,
-          assigned_to: form.assigned_to || undefined,
-          client_name: form.client_name.trim(),
-          remarks: form.remarks.trim() || undefined,
-        },
-        user,
-      )
-      setTransactions((prev) => [newTxn, ...prev])
-      setCreateOpen(false)
-      setForm({ service_id: '', assigned_to: '', client_name: '', remarks: '' })
-      toast({ title: 'Transaction created', description: `Time-in recorded: ${formatDateTime(newTxn.time_in)}`, variant: 'success' })
-    } catch (err) {
-      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to create', variant: 'destructive' })
-    } finally {
-      setCreating(false)
-    }
-  }
 
   return (
     <div className="flex flex-col h-full">
@@ -212,84 +175,13 @@ export function TransactionsPage() {
         )}
       </div>
 
-      {/* Create Transaction Dialog — EMS-004 */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>New Service Transaction</DialogTitle>
-            <DialogDescription>
-              EMS-004: Time-in is automatically recorded upon creation.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Service *</Label>
-              <Select value={form.service_id} onValueChange={(v) => setForm({ ...form, service_id: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a service…" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {services.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      <span className="flex flex-col">
-                        <span>{s.name}</span>
-                        <span className="text-xs text-muted-foreground">{s.category} · SLA: {s.sla_display}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Client Name *</Label>
-              <Input
-                placeholder="Enter client name…"
-                value={form.client_name}
-                onChange={(e) => setForm({ ...form, client_name: e.target.value })}
-              />
-            </div>
-
-            {/* EMS-005: Assign to same-office staff */}
-            <div className="space-y-1.5">
-              <Label>Assign To (EMS-005)</Label>
-              <Select value={form.assigned_to} onValueChange={(v) => setForm({ ...form, assigned_to: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Unassigned" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
-                  {officeUsers.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>{u.name} ({u.role === 'subsystem_admin' ? 'Admin' : 'Staff'})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">Only staff within your office can be assigned (EMS-005)</p>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Remarks</Label>
-              <Textarea
-                placeholder="Optional remarks…"
-                value={form.remarks}
-                onChange={(e) => setForm({ ...form, remarks: e.target.value })}
-                rows={2}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button
-              onClick={handleCreate}
-              disabled={creating || !form.service_id || !form.client_name.trim()}
-            >
-              {creating ? 'Creating…' : 'Create & Record Time-In'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TransactionModal
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        services={services}
+        currentUser={user}
+        onCreated={(transaction) => setTransactions((prev) => [transaction, ...prev])}
+      />
     </div>
   )
 }

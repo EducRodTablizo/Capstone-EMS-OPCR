@@ -75,6 +75,13 @@ export type TransactionStatus = 'pending' | 'in_progress' | 'completed'
 export type DocumentaryStatus = 'complete' | 'incomplete' | 'for_compliance'
 export type SlaStatus = 'compliant' | 'non_compliant' | 'pending_computation'
 
+export interface AuditTimelineItem {
+  id: string
+  event: string
+  timestamp: string
+  created_by_name: string
+}
+
 export interface Transaction {
   id: string
   service_id: string
@@ -95,6 +102,14 @@ export interface Transaction {
   sla_status: SlaStatus
   is_sla_breached: boolean
   client_name: string
+  client_type?: string | null
+  student_number?: string | null
+  course?: string | null
+  year_level?: string | null
+  contact_number?: string | null
+  organization?: string | null
+  service_specific_data?: Record<string, unknown> | null
+  audit_timeline?: AuditTimelineItem[]
   remarks: string | null
   created_at: string
   updated_at: string
@@ -131,7 +146,15 @@ export interface CreateTransactionDto {
   service_id: string
   assigned_to?: string
   client_name: string
+  client_type?: string
+  student_number?: string
+  course?: string
+  year_level?: string
+  contact_number?: string
+  organization?: string
   remarks?: string
+  documentation_status?: DocumentaryStatus
+  service_specific_data?: Record<string, unknown>
 }
 
 export interface UpdateTransactionStatusDto {

@@ -99,6 +99,10 @@ export async function createTransactionApi(
   if (!service) throw new Error('Service not found')
 
   const assignee = dto.assigned_to ? _users.find((u) => u.id === dto.assigned_to) : null
+  const documentaryStatus = dto.documentation_status ?? 'complete'
+
+  const assignedToId = assignee?.id ?? dto.assigned_to ?? null
+  const assignedToName = assignee?.name ?? (dto.assigned_to ?? null)
 
   const newTxn: Transaction = {
     id: `txn-${Date.now()}`,
@@ -107,19 +111,34 @@ export async function createTransactionApi(
     service_category: service.category,
     office_id: createdBy.office_id,
     office_name: createdBy.office_name,
-    assigned_to: assignee?.id ?? null,
-    assigned_to_name: assignee?.name ?? null,
+    assigned_to: assignedToId,
+    assigned_to_name: assignedToName,
     created_by: createdBy.id,
     created_by_name: createdBy.name,
     time_in: new Date().toISOString(), // EMS-004: auto time-in
     time_out: null,
     status: 'pending',
-    documentary_status: 'complete',
+    documentary_status: documentaryStatus,
     processing_time_seconds: null,
     sla_target_seconds: service.sla_target_seconds,
     sla_status: 'pending_computation',
     is_sla_breached: false,
     client_name: dto.client_name,
+    client_type: dto.client_type ?? null,
+    student_number: dto.student_number ?? null,
+    course: dto.course ?? null,
+    year_level: dto.year_level ?? null,
+    contact_number: dto.contact_number ?? null,
+    organization: dto.organization ?? null,
+    service_specific_data: dto.service_specific_data ?? null,
+    audit_timeline: [
+      {
+        id: `at-${Date.now()}`,
+        event: 'Transaction created',
+        timestamp: new Date().toISOString(),
+        created_by_name: createdBy.name,
+      },
+    ],
     remarks: dto.remarks ?? null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -132,7 +151,7 @@ export async function createTransactionApi(
     id: `h-${Date.now()}`,
     transaction_id: newTxn.id,
     old_status: null, new_status: 'pending',
-    documentary_old: null, documentary_new: 'complete',
+    documentary_old: null, documentary_new: documentaryStatus,
     changed_by: createdBy.id, changed_by_name: createdBy.name,
     changed_at: newTxn.time_in,
     remarks: 'Transaction created',

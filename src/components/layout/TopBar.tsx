@@ -11,7 +11,7 @@ export function TopBar({ title, subtitle }: TopBarProps) {
   const { user } = useAuth()
 
   return (
-    <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6 shrink-0">
+    <header className="sticky top-0 z-20 h-16 border-b border-border bg-card flex items-center justify-between px-6 shrink-0">
       <div>
         <h1 className="text-base font-semibold text-foreground">{title}</h1>
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
