@@ -40,10 +40,7 @@ export function UsersPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar
-        title="User Management"
-        subtitle="EMS-001 · Read-only · Synced from ARMS"
-      />
+      <TopBar title="User Management" />
 
       <div className="flex-1 p-6 space-y-5 overflow-auto">
         {/* Read-only notice */}

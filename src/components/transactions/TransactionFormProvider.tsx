@@ -32,7 +32,7 @@ const baseFormSchema = z.object({
   student_number: z.string(),
   course: z.string(),
   year_level: z.string(),
-  contact_number: z.string().trim().min(1, 'Contact number is required').regex(contactNumberRegex, 'Contact number must match +63XXXXXXXXXX or 09XXXXXXXXXX'),
+  contact_number: z.string().trim().min(1, 'Contact number is required').regex(contactNumberRegex, 'Contact number must be 09XXXXXXXXX'),
   organization: z.string(),
   remarks: z.string(),
   service_specific_data: z.any().optional(),

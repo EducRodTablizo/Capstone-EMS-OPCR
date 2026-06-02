@@ -310,7 +310,7 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
                         defaultValue=""
                         render={({ field }) => (
                           <>
-                            <Input placeholder="+63XXXXXXXXXX or 09XXXXXXXXX" value={field.value} onChange={field.onChange} />
+                            <Input placeholder="09XXXXXXXXX" value={field.value} onChange={field.onChange} />
                             {errors.contact_number?.message && (
                               <p className="text-xs text-destructive">{errors.contact_number.message}</p>
                             )}

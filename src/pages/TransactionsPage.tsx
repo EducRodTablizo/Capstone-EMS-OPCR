@@ -32,7 +32,7 @@ export function TransactionsPage() {
   const isReadOnly = user?.role === 'opcr_evaluator'
 
   useEffect(() => {
-    const officeId = user?.role === 'opcr_evaluator' ? undefined : user?.office_id
+    const officeId = user?.office_id
     Promise.all([
       getTransactionsApi(officeId),
       getServicesApi(user?.office_id),
@@ -52,7 +52,7 @@ export function TransactionsPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Service Transactions" subtitle="EMS-004 · 005 · 006 · 007" />
+      <TopBar title="Service Transactions" />
 
       <div className="flex-1 p-6 space-y-4 overflow-auto">
         {/* Toolbar */}
