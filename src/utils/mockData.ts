@@ -14,17 +14,17 @@ export const OFFICES: Office[] = [
 export const MOCK_USERS: User[] = [
   // Administrative Office
   {
-    id: 'usr-1', name: 'John Michael Garcia', email: 'msantos@pup.edu.ph',
+    id: 'usr-1', name: 'John Michael Garcia', email: 'Garcia@pup.edu.ph',
     role: 'subsystem_admin', office_id: 'off-1', office_code: 'ADMIN_OFFICE',
     office_name: 'Administrative Office', is_active: true, created_at: '2026-01-01T00:00:00Z',
   },
   {
-    id: 'usr-2', name: 'Kenneth Yulip', email: 'jreyes@pup.edu.ph',
+    id: 'usr-2', name: 'Kenneth Yulip', email: 'Yulip@pup.edu.ph',
     role: 'staff', office_id: 'off-1', office_code: 'ADMIN_OFFICE',
     office_name: 'Administrative Office', is_active: true, created_at: '2026-01-02T00:00:00Z',
   },
   {
-    id: 'usr-3', name: 'Ryan Bill supot', email: 'acruz@pup.edu.ph',
+    id: 'usr-3', name: 'Ryan Bill Donayre', email: 'Donayre@pup.edu.ph',
     role: 'staff', office_id: 'off-1', office_code: 'ADMIN_OFFICE',
     office_name: 'Administrative Office', is_active: true, created_at: '2026-01-03T00:00:00Z',
   },
@@ -57,7 +57,7 @@ export const MOCK_USERS: User[] = [
   },
   // OPCR Evaluator (cross-office)
   {
-    id: 'usr-9', name: 'Pau Carillio', email: 'rlim@pup.edu.ph',
+    id: 'usr-9', name: 'Pau Carillio', email: 'Pau@pup.edu.ph',
     role: 'opcr_evaluator', office_id: 'off-1', office_code: 'ADMIN_OFFICE',
     office_name: 'Administrative Office', is_active: true, created_at: '2026-01-09T00:00:00Z',
   },

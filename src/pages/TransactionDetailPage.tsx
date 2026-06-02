@@ -290,7 +290,7 @@ export function TransactionDetailPage() {
             {canModify && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Assignment (EMS-005)</CardTitle>
+                  <CardTitle className="text-sm">Assignment</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2">
