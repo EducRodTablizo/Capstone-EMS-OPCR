@@ -24,7 +24,7 @@ export const MOCK_USERS: User[] = [
     office_name: 'Administrative Office', is_active: true, created_at: '2026-01-02T00:00:00Z',
   },
   {
-    id: 'usr-3', name: 'Ana Cruz', email: 'acruz@pup.edu.ph',
+    id: 'usr-3', name: 'Ryan Bill supot', email: 'acruz@pup.edu.ph',
     role: 'staff', office_id: 'off-1', office_code: 'ADMIN_OFFICE',
     office_name: 'Administrative Office', is_active: true, created_at: '2026-01-03T00:00:00Z',
   },

@@ -50,7 +50,7 @@ export function UsersPage() {
             <p className="text-sm font-medium text-info">Read-only view</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               Users are managed exclusively by the Administrative &amp; Records Management System (ARMS).
-              No creation or editing is available within EMS (EMS-001, EMS-002).
+              No creation or editing is available within EMS.
             </p>
           </div>
         </div>
