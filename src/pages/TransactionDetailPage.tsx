@@ -150,7 +150,7 @@ export function TransactionDetailPage() {
           <div className="flex items-center gap-2 rounded-lg border border-muted bg-muted/30 px-4 py-3 mb-5">
             <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
             <p className="text-sm text-muted-foreground">
-              This transaction is <strong>completed</strong> and is now read-only (EMS-025).
+              This transaction is <strong>completed</strong> and is now read-only.
             </p>
           </div>
         )}
@@ -188,14 +188,14 @@ export function TransactionDetailPage() {
                     <p className="font-medium text-foreground">{txn.created_by_name}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Time In (EMS-004)</p>
+                    <p className="text-xs text-muted-foreground mb-0.5">Time In </p>
                     <p className="font-medium text-foreground flex items-center gap-1">
                       <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                       {formatDateTime(txn.time_in)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Time Out (EMS-008)</p>
+                    <p className="text-xs text-muted-foreground mb-0.5">Time Out  </p>
                     <p className="font-medium text-foreground flex items-center gap-1">
                       <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                       {txn.time_out ? formatDateTime(txn.time_out) : <span className="text-muted-foreground italic">Auto on completion</span>}
@@ -214,7 +214,7 @@ export function TransactionDetailPage() {
             {/* Status flow — EMS-006 */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Transaction Status (EMS-006)</CardTitle>
+                <CardTitle className="text-sm">Transaction Status </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Progress steps */}
@@ -259,7 +259,7 @@ export function TransactionDetailPage() {
             {/* Documentary status — EMS-007 */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Documentary Status (EMS-007)</CardTitle>
+                <CardTitle className="text-sm">Documentary Status </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <DocumentaryBadge status={txn.documentary_status} />
@@ -290,7 +290,7 @@ export function TransactionDetailPage() {
             {canModify && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Assignment (EMS-005)</CardTitle>
+                  <CardTitle className="text-sm">Assignment </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -325,7 +325,7 @@ export function TransactionDetailPage() {
             {/* SLA Card — EMS-009, 010, 011 */}
             <Card className={cn(txn.is_sla_breached && 'border-destructive/30')}>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm">SLA Compliance (EMS-009–011)</CardTitle>
+                <CardTitle className="text-sm">SLA Compliance </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <SLABadge status={txn.sla_status} isBreached={txn.is_sla_breached} />

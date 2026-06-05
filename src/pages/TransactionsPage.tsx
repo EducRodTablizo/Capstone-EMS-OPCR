@@ -81,7 +81,7 @@ export function TransactionsPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Service Transactions" subtitle="EMS-004 · 005 · 006 · 007" />
+      <TopBar title="Service Transactions" subtitle="" />
 
       <div className="flex-1 p-6 space-y-4 overflow-auto">
 

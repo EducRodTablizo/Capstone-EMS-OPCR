@@ -57,7 +57,7 @@ export function SLAReviewPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="SLA Review" subtitle="EMS-010 · 011 · 012 · Sprint 2" />
+      <TopBar title="SLA Review" subtitle="" />
 
       <div className="flex-1 p-6 space-y-5 overflow-auto">
         {/* Summary row */}

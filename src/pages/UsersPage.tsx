@@ -42,7 +42,7 @@ export function UsersPage() {
     <div className="flex flex-col h-full">
       <TopBar
         title="User Management"
-        subtitle="EMS-001 · Read-only · Synced from ARMS"
+        subtitle=" Read-only · Synced from ARMS"
       />
 
       <div className="flex-1 p-6 space-y-5 overflow-auto">
@@ -53,7 +53,7 @@ export function UsersPage() {
             <p className="text-sm font-medium text-info">Read-only view</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               Users are managed exclusively by the Administrative &amp; Records Management System (ARMS).
-              No creation or editing is available within EMS (EMS-001, EMS-002).
+              No creation or editing is available within EMS.
             </p>
           </div>
         </div>

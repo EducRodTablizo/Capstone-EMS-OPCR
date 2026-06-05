@@ -4,7 +4,7 @@
 This is the **frontend** of the Evaluation & Monitoring System (EMS), one of 3 capstone subsystems:
 - **ARMS** – Administrative & Records Management System (Central Auth / JWT issuer)
 - **PSS** – Planning & Scheduling System (SLA rules, working-day calendars)
-- **EMS** – Evaluation & Monitoring System ← this project
+- **EMS** – Evaluation & Monitoring System ← (Monitors and processes transactions, enforces SLAs)
 
 Tech stack: React + Vite + TypeScript + TailwindCSS (frontend) / NestJS + PostgreSQL (backend, external).  
 JWT tokens are issued by ARMS; EMS validates them. No Supabase — API calls go to NestJS.
