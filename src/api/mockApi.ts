@@ -186,6 +186,20 @@ export async function assignTransactionApi(
     updated_at: new Date().toISOString(),
   }
   _transactions[idx] = updated
+
+  _history.push({
+    id: `h-${Date.now()}`,
+    transaction_id: id,
+    old_status: txn.status,
+    new_status: txn.status,
+    documentary_old: txn.documentary_status,
+    documentary_new: txn.documentary_status,
+    changed_by: actingUser.id,
+    changed_by_name: actingUser.name,
+    changed_at: updated.updated_at,
+    remarks: `Reassigned from ${txn.assigned_to_name ?? 'Unassigned'} to ${assignee.name}`,
+  })
+
   return updated
 }
 

@@ -14,6 +14,9 @@ export interface TransactionFormValues {
   assigned_to: string
   client_type: 'Student' | 'Visitor' | 'Organization'
   client_name: string
+  client_first_name: string
+  client_middle_name: string
+  client_surname: string
   student_number: string
   course: string
   year_level: string

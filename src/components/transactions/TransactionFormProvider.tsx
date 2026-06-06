@@ -28,13 +28,16 @@ const baseFormSchema = z.object({
   service_id: z.string().min(1, 'Service is required'),
   assigned_to: z.string(),
   client_type: z.enum(['Student', 'Visitor', 'Organization']),
-  client_name: z.string().trim().min(1, 'Client name is required'),
+  client_name: z.string().optional(),
+  client_first_name: z.string().trim().min(1, 'First name is required'),
+  client_middle_name: z.string().optional(),
+  client_surname: z.string().trim().min(1, 'Surname is required'),
   student_number: z.string(),
   course: z.string(),
   year_level: z.string(),
   contact_number: z.string().trim().min(1, 'Contact number is required').regex(contactNumberRegex, 'Contact number must be 09XXXXXXXXX'),
   organization: z.string(),
-  remarks: z.string(),
+  remarks: z.string().max(255, 'Remarks cannot exceed 255 characters'),
   service_specific_data: z.any().optional(),
 })
 

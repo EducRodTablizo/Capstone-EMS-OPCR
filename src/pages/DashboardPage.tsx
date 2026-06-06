@@ -76,13 +76,15 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <TopBar
-        title="Dashboard"
-        subtitle={`Overview — ${user?.office_name}`}
-      />
+    <div className="flex flex-col h-full bg-[#F5F7FA]">
+      <TopBar />
 
       <div className="flex-1 p-6 space-y-6 overflow-auto">
+        {/* Page Title */}
+        <div>
+          <h2 className="page-title text-2xl">Dashboard</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Overview — {user?.office_name}</p>
+        </div>
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard

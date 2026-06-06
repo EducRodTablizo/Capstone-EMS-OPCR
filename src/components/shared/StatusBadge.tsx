@@ -12,23 +12,26 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     pending: {
       label: 'Pending',
       icon: Clock,
-      className: 'bg-warning/10 text-warning border border-warning/30',
+      style: { backgroundColor: 'var(--warning-bg)', color: 'var(--warning)', borderColor: 'rgba(186, 117, 23, 0.3)' },
     },
     in_progress: {
       label: 'In Progress',
       icon: PlayCircle,
-      className: 'bg-info/10 text-info border border-info/30',
+      style: { backgroundColor: '#eff6ff', color: '#2563eb', borderColor: '#2563eb' },
     },
     completed: {
       label: 'Completed',
       icon: CheckCircle2,
-      className: 'bg-success/10 text-success border border-success/30',
+      style: { backgroundColor: 'var(--success-bg)', color: 'var(--success)', borderColor: 'rgba(29, 158, 117, 0.3)' },
     },
   }[status]
 
   const Icon = config.icon
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold', config.className, className)}>
+    <span
+      className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold border', className)}
+      style={config.style}
+    >
       <Icon className="h-3 w-3" />
       {config.label}
     </span>
@@ -42,13 +45,25 @@ interface DocumentaryBadgeProps {
 
 export function DocumentaryBadge({ status, className }: DocumentaryBadgeProps) {
   const config = {
-    complete: { label: 'Complete', className: 'bg-success/10 text-success border border-success/30' },
-    incomplete: { label: 'Incomplete', className: 'bg-destructive/10 text-destructive border border-destructive/30' },
-    for_compliance: { label: 'For Compliance', className: 'bg-warning/10 text-warning border border-warning/30' },
+    complete: {
+      label: 'Complete',
+      style: { backgroundColor: 'var(--success-bg)', color: 'var(--success)', borderColor: 'rgba(29, 158, 117, 0.3)' }
+    },
+    incomplete: {
+      label: 'Incomplete',
+      style: { backgroundColor: 'var(--error-bg)', color: 'var(--error)', borderColor: 'rgba(226, 75, 74, 0.3)' }
+    },
+    for_compliance: {
+      label: 'For Compliance',
+      style: { backgroundColor: 'var(--warning-bg)', color: 'var(--warning)', borderColor: 'rgba(186, 117, 23, 0.3)' }
+    },
   }[status]
 
   return (
-    <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold', config.className, className)}>
+    <span
+      className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border', className)}
+      style={config.style}
+    >
       {config.label}
     </span>
   )
@@ -62,14 +77,26 @@ interface SLABadgeProps {
 
 export function SLABadge({ status, isBreached, className }: SLABadgeProps) {
   const config = {
-    compliant: { label: 'Compliant', className: 'bg-success/10 text-success border border-success/30' },
-    non_compliant: { label: 'Non-Compliant', className: 'bg-destructive/10 text-destructive border border-destructive/30' },
-    pending_computation: { label: 'Pending', className: 'bg-muted text-muted-foreground border border-border' },
+    compliant: {
+      label: 'Compliant',
+      style: { backgroundColor: 'var(--success-bg)', color: 'var(--success)', borderColor: 'rgba(29, 158, 117, 0.3)' }
+    },
+    non_compliant: {
+      label: 'Non-Compliant',
+      style: { backgroundColor: 'var(--error-bg)', color: 'var(--error)', borderColor: 'rgba(226, 75, 74, 0.3)' }
+    },
+    pending_computation: {
+      label: 'Pending',
+      style: { backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)', borderColor: 'var(--border)' }
+    },
   }[status]
 
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold', config.className, isBreached && 'animate-pulse-soft', className)}>
-      {isBreached && <span className="h-1.5 w-1.5 rounded-full bg-destructive" />}
+    <span
+      className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold border', isBreached && 'animate-pulse-soft', className)}
+      style={config.style}
+    >
+      {isBreached && <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: 'var(--error)' }} />}
       {config.label}
     </span>
   )
@@ -80,14 +107,29 @@ interface RoleBadgeProps {
 }
 
 export function RoleBadge({ role }: RoleBadgeProps) {
-  const config: Record<string, { label: string; className: string }> = {
-    subsystem_admin: { label: 'Subsystem Admin', className: 'bg-primary/10 text-primary border border-primary/20' },
-    staff: { label: 'Staff', className: 'bg-secondary/20 text-secondary-foreground border border-secondary/30' },
-    opcr_evaluator: { label: 'OPCR Evaluator', className: 'bg-info/10 text-info border border-info/20' },
+  const config: Record<string, { label: string; style: React.CSSProperties }> = {
+    subsystem_admin: {
+      label: 'Subsystem Admin',
+      style: { backgroundColor: 'rgba(88, 0, 0, 0.08)', color: 'var(--pup-primary)', borderColor: 'rgba(88, 0, 0, 0.2)' }
+    },
+    staff: {
+      label: 'Staff',
+      style: { backgroundColor: 'rgba(200, 150, 12, 0.12)', color: 'var(--pup-gold)', borderColor: 'rgba(200, 150, 12, 0.3)' }
+    },
+    opcr_evaluator: {
+      label: 'OPCR Evaluator',
+      style: { backgroundColor: 'rgba(27, 58, 107, 0.08)', color: 'var(--info)', borderColor: 'rgba(27, 58, 107, 0.2)' }
+    },
   }
-  const c = config[role] ?? { label: role, className: 'bg-muted text-muted-foreground' }
+  const c = config[role] ?? {
+    label: role,
+    style: { backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)', borderColor: 'var(--border)' }
+  }
   return (
-    <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold', c.className)}>
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border"
+      style={c.style}
+    >
       {c.label}
     </span>
   )

@@ -6,7 +6,6 @@ import { getTransactionsApi, getServicesApi } from '@/api/mockApi'
 import type { Transaction, Service, TransactionStatus } from '@/types'
 import { TopBar } from '@/components/layout/TopBar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge, SLABadge, DocumentaryBadge } from '@/components/shared/StatusBadge'
@@ -51,38 +50,47 @@ export function TransactionsPage() {
   })
 
   return (
-    <div className="flex flex-col h-full">
-      <TopBar title="Service Transactions" />
+    <div className="flex flex-col h-full bg-[#F5F7FA]">
+      <TopBar />
 
-      <div className="flex-1 p-6 space-y-4 overflow-auto">
+      <div className="flex-1 p-6 space-y-5 overflow-auto">
+        {/* Page Title */}
+        <div>
+          <h2 className="page-title text-2xl">Service Transactions</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Track and update active OPCR transactions.</p>
+        </div>
+
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-48">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search transactions…"
+          <div className="relative w-full sm:w-[350px]">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" />
+            <input
+              type="text"
+              placeholder="Search transactions..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="w-full pl-10 pr-4 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-1 focus:ring-[#580000] placeholder:text-muted-foreground/60 transition-all h-14 md:h-12"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
-              <SelectTrigger className="w-36">
+
+          <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
+            <SelectTrigger className="w-40 h-14 md:h-12 bg-white">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
                 <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+
           {!isReadOnly && (
-            <Button onClick={() => setCreateOpen(true)} className="shrink-0">
-              <Plus className="h-4 w-4" />
+            <Button onClick={() => setCreateOpen(true)} className="bg-[#580000] text-white hover:bg-[#7a0c0c] h-14 md:h-12 px-5 font-semibold">
+              <Plus className="h-4 w-4 mr-1.5" />
               New Transaction
             </Button>
           )}

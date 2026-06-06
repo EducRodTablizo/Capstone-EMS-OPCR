@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { TrendingUp, AlertTriangle, CheckCircle2, XCircle, ArrowRight } from 'lucide-react'
+import { TrendingUp, AlertTriangle, CheckCircle2, XCircle, ArrowRight, Filter } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { getTransactionsApi } from '@/api/mockApi'
 import type { Transaction, ServiceCategory } from '@/types'
@@ -56,10 +56,15 @@ export function SLAReviewPage() {
     : 0
 
   return (
-    <div className="flex flex-col h-full">
-      <TopBar title="SLA Review" />
+    <div className="flex flex-col h-full bg-[#F5F7FA]">
+      <TopBar />
 
       <div className="flex-1 p-6 space-y-5 overflow-auto">
+        {/* Page Title */}
+        <div>
+          <h2 className="page-title text-2xl">Evaluation Period</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Review active service compliance logs and targets.</p>
+        </div>
         {/* Summary row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -147,8 +152,11 @@ export function SLAReviewPage() {
         {/* Filters + Table */}
         <div className="flex items-center gap-3 flex-wrap">
           <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as CategoryFilter)}>
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="Category" />
+            <SelectTrigger className="w-48 h-14 md:h-12 bg-white">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="Category" />
+              </div>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
@@ -156,8 +164,11 @@ export function SLAReviewPage() {
             </SelectContent>
           </Select>
           <Select value={slaFilter} onValueChange={(v) => setSlaFilter(v as typeof slaFilter)}>
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="SLA Status" />
+            <SelectTrigger className="w-48 h-14 md:h-12 bg-white">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="SLA Status" />
+              </div>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All SLA</SelectItem>

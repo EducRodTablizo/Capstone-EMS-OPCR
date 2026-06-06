@@ -16,8 +16,10 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { StatusBadge, SLABadge, DocumentaryBadge } from '@/components/shared/StatusBadge'
 import { formatDateTime, formatDuration } from '@/utils/timeUtils'
 import { slaVariance } from '@/utils/slaUtils'
@@ -34,10 +36,10 @@ function StatusStep({ status, current, completed }: { status: TransactionStatus;
     <div className={cn('flex-1 text-center', isActive && 'font-medium')}>
       <div className={cn(
         'h-2 rounded-full mb-1.5 transition-colors',
-        isDone ? 'bg-success' : isActive ? 'bg-primary' : 'bg-muted',
+        isDone ? 'bg-[#1D9E75]' : isActive ? 'bg-[#580000]' : 'bg-muted',
       )} />
       <span className={cn(
-        'text-xs',
+        'text-xs font-semibold',
         isDone || isActive ? 'text-foreground' : 'text-muted-foreground',
       )}>
         {labels[status]}
@@ -54,8 +56,20 @@ export function TransactionDetailPage() {
   const [officeUsers, setOfficeUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
 
-  const [remarks, setRemarks] = useState('')
+  // Status/Document update remarks
+  const [statusRemarks, setStatusRemarks] = useState('')
+  const [docRemarks, setDocRemarks] = useState('')
   const [updating, setUpdating] = useState(false)
+
+  // Confirmation Modals State
+  const [showStatusConfirm, setShowStatusConfirm] = useState(false)
+  const [pendingStatus, setPendingStatus] = useState<TransactionStatus | null>(null)
+
+  const [showDocConfirm, setShowDocConfirm] = useState(false)
+  const [pendingDocStatus, setPendingDocStatus] = useState<DocumentaryStatus | null>(null)
+
+  const [showAssignConfirm, setShowAssignConfirm] = useState(false)
+  const [pendingAssignee, setPendingAssignee] = useState<User | null>(null)
 
   const canModify = user?.role !== 'opcr_evaluator' && txn?.status !== 'completed'
 
@@ -72,51 +86,105 @@ export function TransactionDetailPage() {
     }).finally(() => setLoading(false))
   }, [id, user])
 
-  async function handleStatusUpdate(newStatus: TransactionStatus) {
-    if (!txn || !user) return
+  // Trigger Status Update Confirm
+  function triggerStatusUpdate(newStatus: TransactionStatus) {
+    setPendingStatus(newStatus)
+    setShowStatusConfirm(true)
+  }
+
+  async function handleStatusUpdate() {
+    if (!txn || !user || !pendingStatus) return
+    setShowStatusConfirm(false)
     setUpdating(true)
     try {
-      const updated = await updateTransactionStatusApi(txn.id, { status: newStatus, remarks: remarks || undefined }, user)
+      const updated = await updateTransactionStatusApi(
+        txn.id,
+        { status: pendingStatus, remarks: statusRemarks || undefined },
+        user
+      )
       setTxn(updated)
       const h = await getTransactionHistoryApi(txn.id)
       setHistory(h)
-      setRemarks('')
-      toast({ title: `Status → ${newStatus.replace('_', ' ')}`, variant: 'success' })
+      setStatusRemarks('')
+      toast({ title: `Status → ${pendingStatus.replace('_', ' ')}`, variant: 'success' })
     } catch (err) {
       toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed', variant: 'destructive' })
     } finally {
       setUpdating(false)
+      setPendingStatus(null)
     }
   }
 
-  async function handleDocStatusUpdate(newStatus: DocumentaryStatus) {
-    if (!txn || !user) return
+  // Trigger Documentary Status Update Confirm
+  function triggerDocStatusUpdate(newStatus: DocumentaryStatus) {
+    setPendingDocStatus(newStatus)
+    setShowDocConfirm(true)
+  }
+
+  async function handleDocStatusUpdate() {
+    if (!txn || !user || !pendingDocStatus) return
+    setShowDocConfirm(false)
     setUpdating(true)
     try {
-      const updated = await updateDocumentaryStatusApi(txn.id, { documentary_status: newStatus }, user)
+      const updated = await updateDocumentaryStatusApi(
+        txn.id,
+        { documentary_status: pendingDocStatus, remarks: docRemarks || undefined },
+        user
+      )
       setTxn(updated)
       const h = await getTransactionHistoryApi(txn.id)
       setHistory(h)
+      setDocRemarks('')
       toast({ title: `Documentary status updated`, variant: 'success' })
     } catch (err) {
       toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed', variant: 'destructive' })
     } finally {
       setUpdating(false)
+      setPendingDocStatus(null)
     }
   }
 
-  async function handleAssign(userId: string) {
-    if (!txn || !user) return
+  // Reassignment handlers
+  function handleAssignSelection(userId: string) {
+    if (!txn) return
+    if (userId === txn.assigned_to) return
+    const assignee = officeUsers.find((u) => u.id === userId)
+    if (!assignee) return
+    setPendingAssignee(assignee)
+    setShowAssignConfirm(true)
+  }
+
+  async function confirmReassign() {
+    if (!txn || !user || !pendingAssignee) return
+    setShowAssignConfirm(false)
     setUpdating(true)
     try {
-      const updated = await assignTransactionApi(txn.id, userId, user)
+      const previousAssignee = txn.assigned_to_name ?? 'Unassigned'
+      const updated = await assignTransactionApi(txn.id, pendingAssignee.id, user)
       setTxn(updated)
-      toast({ title: 'Assigned successfully', variant: 'success' })
+      const h = await getTransactionHistoryApi(txn.id)
+      setHistory(h)
+      toast({
+        title: 'Reassignment complete',
+        description: `${previousAssignee} → ${pendingAssignee.name}`,
+        variant: 'success',
+      })
     } catch (err) {
       toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed', variant: 'destructive' })
     } finally {
       setUpdating(false)
+      setPendingAssignee(null)
     }
+  }
+
+  function getHistoryLabel(item: TransactionStatusHistory) {
+    if (item.old_status === null && item.new_status === 'pending') {
+      return 'Created'
+    }
+    if (item.remarks?.startsWith('Reassigned')) {
+      return item.remarks
+    }
+    return `Status: ${item.old_status} → ${item.new_status}`
   }
 
   if (loading) {
@@ -137,28 +205,28 @@ export function TransactionDetailPage() {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <TopBar title="Transaction Detail" />
+      <TopBar />
 
-      <div className="flex-1 min-h-0 overflow-auto p-6">
-        <Link to="/transactions" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors">
+      <div className="flex-1 min-h-0 overflow-auto p-6 bg-[#F5F7FA]">
+        <Link to="/transactions" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors font-medium">
           <ArrowLeft className="h-4 w-4" />
           Back to Transactions
         </Link>
 
         {/* Completed read-only notice */}
         {txn.status === 'completed' && (
-          <div className="flex items-center gap-2 rounded-lg border border-muted bg-muted/30 px-4 py-3 mb-5">
-            <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
-            <p className="text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-[#E6F1FB] px-4 py-3 mb-5">
+            <Lock className="h-4 w-4 text-[#1B3A6B] shrink-0" />
+            <p className="text-sm text-[#1B3A6B] font-medium">
               This transaction is <strong>completed</strong> and is now read-only.
             </p>
           </div>
         )}
 
         {txn.is_sla_breached && (
-          <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 mb-5">
-            <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-            <p className="text-sm text-destructive">
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-[#FCEBEB] px-4 py-3 mb-5">
+            <AlertTriangle className="h-4 w-4 text-[#E24B4A] shrink-0" />
+            <p className="text-sm text-[#E24B4A] font-medium">
               SLA Breached — actual duration exceeded the {formatDuration(txn.sla_target_seconds)} target.
             </p>
           </div>
@@ -167,44 +235,45 @@ export function TransactionDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Main info */}
           <div className="lg:col-span-2 space-y-5">
+            
             {/* Service info card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Service Information</CardTitle>
+            <Card className="rounded-xl border border-border shadow-sm bg-white">
+              <CardHeader className="pb-3 border-b border-border/80">
+                <CardTitle className="section-header">Service Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4 pt-4">
                 <div>
-                  <p className="text-lg font-semibold text-foreground">{txn.service_name}</p>
-                  <p className="text-sm text-muted-foreground">{txn.service_category} · {txn.office_name}</p>
+                  <p className="text-lg font-bold text-foreground">{txn.service_name}</p>
+                  <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mt-0.5">{txn.service_category} · {txn.office_name}</p>
                 </div>
                 <Separator />
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Client</p>
-                    <p className="font-medium text-foreground">{txn.client_name}</p>
+                    <p className="text-xs text-muted-foreground mb-0.5 font-medium">Client</p>
+                    <p className="font-semibold text-foreground">{txn.client_name}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Created By</p>
-                    <p className="font-medium text-foreground">{txn.created_by_name}</p>
+                    <p className="text-xs text-muted-foreground mb-0.5 font-medium">Created By</p>
+                    <p className="font-semibold text-foreground">{txn.created_by_name}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Time In </p>
-                    <p className="font-medium text-foreground flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground mb-0.5 font-medium">Time In</p>
+                    <p className="font-semibold text-foreground flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                       {formatDateTime(txn.time_in)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Time Out </p>
-                    <p className="font-medium text-foreground flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground mb-0.5 font-medium">Time Out</p>
+                    <p className="font-semibold text-foreground flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                      {txn.time_out ? formatDateTime(txn.time_out) : <span className="text-muted-foreground italic">Auto on completion</span>}
+                      {txn.time_out ? formatDateTime(txn.time_out) : <span className="text-muted-foreground italic font-normal">Auto on completion</span>}
                     </p>
                   </div>
                   {txn.remarks && (
-                    <div className="col-span-2">
-                      <p className="text-xs text-muted-foreground mb-0.5">Remarks</p>
-                      <p className="text-foreground">{txn.remarks}</p>
+                    <div className="col-span-2 bg-[#F5F7FA] p-3 rounded-lg border border-border/50">
+                      <p className="text-xs text-muted-foreground mb-1 font-bold">Remarks</p>
+                      <p className="text-sm text-foreground">{txn.remarks}</p>
                     </div>
                   )}
                 </div>
@@ -212,13 +281,13 @@ export function TransactionDetailPage() {
             </Card>
 
             {/* Status flow — EMS-006 */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Transaction Status </CardTitle>
+            <Card className="rounded-xl border border-border shadow-sm bg-white">
+              <CardHeader className="pb-3 border-b border-border/80">
+                <CardTitle className="section-header">Transaction Status</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5 pt-4">
                 {/* Progress steps */}
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-2 max-w-md mx-auto pt-2">
                   <StatusStep status="pending" current={txn.status} completed={txn.status === 'completed'} />
                   <div className="h-2 w-4 mt-0 self-start pt-0.5" />
                   <StatusStep status="in_progress" current={txn.status} completed={txn.status === 'completed'} />
@@ -226,29 +295,41 @@ export function TransactionDetailPage() {
                   <StatusStep status="completed" current={txn.status} completed={txn.status === 'completed'} />
                 </div>
 
-                <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground font-medium">Current Status:</span>
                   <StatusBadge status={txn.status} />
                 </div>
 
                 {canModify && nextStatus && (
-                  <div className="space-y-2 pt-2 border-t border-border">
-                    <Label className="text-xs text-muted-foreground">Remarks for status change</Label>
+                  <div className="space-y-3 pt-3 border-t border-border">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs text-muted-foreground">Remarks for status change (Optional)</Label>
+                      <span className="text-[10px] text-muted-foreground">{statusRemarks.length} / 255</span>
+                    </div>
                     <Textarea
-                      placeholder="Optional remarks…"
-                      value={remarks}
-                      onChange={(e) => setRemarks(e.target.value)}
+                      placeholder="Optional status remarks…"
+                      value={statusRemarks}
+                      onChange={(e) => {
+                        if (e.target.value.length <= 255) {
+                          setStatusRemarks(e.target.value)
+                        }
+                      }}
                       rows={2}
+                      className="resize-none"
                     />
                     <Button
-                      onClick={() => handleStatusUpdate(nextStatus)}
+                      onClick={() => triggerStatusUpdate(nextStatus)}
                       disabled={updating}
                       size="sm"
-                      variant={nextStatus === 'completed' ? 'success' : 'default'}
+                      className={cn(
+                        "text-white",
+                        nextStatus === 'completed' ? 'bg-[#1D9E75] hover:bg-[#15805d]' : 'bg-[#580000] hover:bg-[#7a0c0c]'
+                      )}
                     >
                       {nextStatus === 'in_progress' ? (
-                        <><RotateCcw className="h-4 w-4" /> Mark In Progress</>
+                        <><RotateCcw className="h-4 w-4 mr-1.5" /> Mark In Progress</>
                       ) : (
-                        <><CheckCircle2 className="h-4 w-4" /> Mark Completed</>
+                        <><CheckCircle2 className="h-4 w-4 mr-1.5" /> Mark Completed</>
                       )}
                     </Button>
                   </div>
@@ -256,56 +337,97 @@ export function TransactionDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Documentary status — EMS-007 */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Documentary Status </CardTitle>
+            {/* Documentary Status (Horizontal remarks & badges layout) */}
+            <Card className="rounded-xl border border-border shadow-sm bg-white">
+              <CardHeader className="pb-3 border-b border-border/80">
+                <CardTitle className="section-header">Documentary Status</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <DocumentaryBadge status={txn.documentary_status} />
+              <CardContent className="space-y-4 pt-4">
+                {/* Horizontal display: status beside remarks */}
+                <div className="flex items-center gap-3 flex-wrap bg-[#F5F7FA] p-3 rounded-lg border border-border/50">
+                  <DocumentaryBadge status={txn.documentary_status} />
+                  {txn.remarks && (
+                    <>
+                      <span className="text-muted-foreground/40 font-semibold">|</span>
+                      <span className="text-xs font-semibold text-muted-foreground">Remarks:</span>
+                      <span className="text-xs text-foreground font-medium">{txn.remarks}</span>
+                    </>
+                  )}
+                </div>
+
                 {txn.documentary_status === 'incomplete' && (
-                  <p className="text-xs text-destructive">
+                  <p className="text-xs text-[#BA7517] bg-[#FAEEDA] px-3 py-2 rounded border border-[#BA7517]/20 font-medium">
                     SLA timer paused — transaction marked Incomplete is excluded from SLA timing until resolved.
                   </p>
                 )}
+
+                {/* Horizontal update alignment */}
                 {canModify && (
-                  <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
-                    {(['complete', 'incomplete', 'for_compliance'] as DocumentaryStatus[]).map((s) => (
-                      <Button
-                        key={s}
-                        variant={txn.documentary_status === s ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handleDocStatusUpdate(s)}
-                        disabled={updating || txn.documentary_status === s}
-                      >
-                        {s === 'complete' ? 'Complete' : s === 'incomplete' ? 'Incomplete' : 'For Compliance'}
-                      </Button>
-                    ))}
+                  <div className="pt-3 border-t border-border flex flex-col md:flex-row md:items-end gap-4">
+                    {/* Buttons */}
+                    <div className="flex flex-col gap-1.5 shrink-0">
+                      <Label className="text-xs text-muted-foreground">Update Status</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {(['complete', 'incomplete', 'for_compliance'] as DocumentaryStatus[]).map((s) => (
+                          <Button
+                            key={s}
+                            variant={txn.documentary_status === s ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => triggerDocStatusUpdate(s)}
+                            disabled={updating || txn.documentary_status === s}
+                            className={cn(
+                              txn.documentary_status === s && "bg-[#580000] text-white hover:bg-[#580000]"
+                            )}
+                          >
+                            {s === 'complete' ? 'Complete' : s === 'incomplete' ? 'Incomplete' : 'For Compliance'}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Remarks Input Beside Status */}
+                    <div className="flex-1 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs text-muted-foreground">Documentary Remarks (Optional)</Label>
+                        <span className="text-[10px] text-muted-foreground">{docRemarks.length} / 255</span>
+                      </div>
+                      <Input
+                        placeholder="Remarks (e.g. missing attachment)..."
+                        value={docRemarks}
+                        onChange={(e) => {
+                          if (e.target.value.length <= 255) {
+                            setDocRemarks(e.target.value)
+                          }
+                        }}
+                        className="h-9"
+                      />
+                    </div>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* Assign — EMS-005 */}
+            {/* Reassign (Confirmation modal updated) */}
             {canModify && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Assignment</CardTitle>
+              <Card className="rounded-xl border border-border shadow-sm bg-white">
+                <CardHeader className="pb-3 border-b border-border/80">
+                  <CardTitle className="section-header">Assignment</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4 pt-4">
                   <div className="flex items-center gap-2">
                     <User2 className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-foreground">
-                      {txn.assigned_to_name ?? <span className="italic text-muted-foreground">Unassigned</span>}
+                    <span className="text-sm text-foreground font-semibold">
+                      {txn.assigned_to_name ?? <span className="italic text-muted-foreground font-normal">Unassigned</span>}
                     </span>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Reassign to (same-office staff)</Label>
+                  <div className="space-y-1.5 max-w-xs">
+                    <Label className="text-xs text-muted-foreground">Reassign to (same-office staff)</Label>
                     <Select
-                      onValueChange={(v) => handleAssign(v)}
+                      value={txn.assigned_to ?? undefined}
+                      onValueChange={handleAssignSelection}
                       disabled={updating}
                     >
-                      <SelectTrigger className="max-w-xs">
+                      <SelectTrigger>
                         <SelectValue placeholder="Select staff…" />
                       </SelectTrigger>
                       <SelectContent>
@@ -323,20 +445,20 @@ export function TransactionDetailPage() {
           {/* Sidebar — SLA + Timeline */}
           <div className="space-y-5">
             {/* SLA Card — EMS-009, 010, 011 */}
-            <Card className={cn(txn.is_sla_breached && 'border-destructive/30')}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">SLA Compliance </CardTitle>
+            <Card className={cn("rounded-xl border border-border shadow-sm bg-white", txn.is_sla_breached && 'border-destructive/30')}>
+              <CardHeader className="pb-3 border-b border-border/80">
+                <CardTitle className="section-header">SLA Compliance</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 pt-4">
                 <SLABadge status={txn.sla_status} isBreached={txn.is_sla_breached} />
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-sm pt-2">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">SLA Target</span>
-                    <span className="font-medium text-foreground">{formatDuration(txn.sla_target_seconds)}</span>
+                    <span className="text-muted-foreground font-medium">SLA Target</span>
+                    <span className="font-semibold text-foreground">{formatDuration(txn.sla_target_seconds)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Actual Time</span>
-                    <span className="font-medium text-foreground">
+                    <span className="text-muted-foreground font-medium">Actual Time</span>
+                    <span className="font-semibold text-foreground">
                       {txn.processing_time_seconds !== null
                         ? formatDuration(txn.processing_time_seconds)
                         : '—'}
@@ -344,19 +466,19 @@ export function TransactionDetailPage() {
                   </div>
                   <Separator />
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Variance</span>
-                    <span className={cn('font-medium', txn.is_sla_breached ? 'text-destructive' : 'text-success')}>
+                    <span className="text-muted-foreground font-medium">Variance</span>
+                    <span className={cn('font-bold', txn.is_sla_breached ? 'text-[#E24B4A]' : 'text-[#1D9E75]')}>
                       {slaVariance(txn)}
                     </span>
                   </div>
                 </div>
                 {txn.sla_status === 'pending_computation' && (
-                  <p className="text-xs text-muted-foreground border-t border-border pt-2">
+                  <p className="text-xs text-muted-foreground border-t border-border pt-2 leading-relaxed">
                     SLA will be computed and submitted to PSS when this transaction is completed (EMS-010).
                   </p>
                 )}
                 {txn.sla_status !== 'pending_computation' && (
-                  <p className="text-xs text-muted-foreground border-t border-border pt-2">
+                  <p className="text-xs text-muted-foreground border-t border-border pt-2 leading-relaxed">
                     Classification is automated and immutable (EMS-011).
                   </p>
                 )}
@@ -364,28 +486,26 @@ export function TransactionDetailPage() {
             </Card>
 
             {/* Audit Timeline */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Audit Timeline</CardTitle>
+            <Card className="rounded-xl border border-border shadow-sm bg-white">
+              <CardHeader className="pb-3 border-b border-border/80">
+                <CardTitle className="section-header">Audit Timeline</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-4">
                 <div className="relative">
                   <div className="absolute left-2 top-0 bottom-0 w-px bg-border" />
                   <div className="space-y-4">
                     {history.map((h) => (
                       <div key={h.id} className="relative pl-6">
-                        <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-background border-2 border-primary flex items-center justify-center">
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-background border-2 border-[#580000] flex items-center justify-center">
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#580000]" />
                         </div>
                         <div>
-                          <p className="text-xs font-medium text-foreground">
-                            {h.new_status === 'pending' && h.old_status === null
-                              ? 'Created'
-                              : `Status: ${h.old_status} → ${h.new_status}`}
+                          <p className="text-xs font-semibold text-foreground">
+                            {getHistoryLabel(h)}
                             {h.documentary_old !== h.documentary_new && ` · Docs: ${h.documentary_old ?? '—'} → ${h.documentary_new}`}
                           </p>
-                          <p className="text-xs text-muted-foreground">{h.changed_by_name} · {formatDateTime(h.changed_at)}</p>
-                          {h.remarks && <p className="text-xs text-muted-foreground italic mt-0.5">{h.remarks}</p>}
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{h.changed_by_name} · {formatDateTime(h.changed_at)}</p>
+                          {h.remarks && <p className="text-xs text-muted-foreground italic mt-1 bg-muted/30 p-1.5 rounded border border-border/40">{h.remarks}</p>}
                         </div>
                       </div>
                     ))}
@@ -396,6 +516,72 @@ export function TransactionDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Dialog for Status Change */}
+      <Dialog open={showStatusConfirm} onOpenChange={setShowStatusConfirm}>
+        <DialogContent className="max-w-md modal-container">
+          <DialogHeader>
+            <DialogTitle className="modal-title text-[#580000]">Confirm Status Update</DialogTitle>
+            <DialogDescription className="text-sm text-gray-500 mt-2">
+              Are you sure you want to mark this transaction as <strong>{pendingStatus?.replace('_', ' ')}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="pt-4 flex gap-3 justify-end">
+            <Button variant="outline" onClick={() => setShowStatusConfirm(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleStatusUpdate} className="bg-[#580000] text-white hover:bg-[#7a0c0c]">
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog for Documentary Status Change */}
+      <Dialog open={showDocConfirm} onOpenChange={setShowDocConfirm}>
+        <DialogContent className="max-w-md modal-container">
+          <DialogHeader>
+            <DialogTitle className="modal-title text-[#580000]">Confirm Documentary Status Update</DialogTitle>
+            <DialogDescription className="text-sm text-gray-500 mt-2">
+              Are you sure you want to change the documentary status to <strong>{pendingDocStatus}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="pt-4 flex gap-3 justify-end">
+            <Button variant="outline" onClick={() => setShowDocConfirm(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleDocStatusUpdate} className="bg-[#580000] text-white hover:bg-[#7a0c0c]">
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog for Reassignment */}
+      <Dialog open={showAssignConfirm} onOpenChange={setShowAssignConfirm}>
+        <DialogContent className="max-w-md modal-container">
+          <DialogHeader>
+            <DialogTitle className="modal-title text-[#580000]">Confirm Reassignment</DialogTitle>
+            <DialogDescription className="text-sm text-gray-500 mt-2">
+              Are you sure you want to reassign this transaction from <strong>{txn.assigned_to_name ?? 'Unassigned'}</strong> to <strong>{pendingAssignee?.name}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="pt-4 flex gap-3 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAssignConfirm(false)
+                setPendingAssignee(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={confirmReassign} className="bg-[#580000] text-white hover:bg-[#7a0c0c]">
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
