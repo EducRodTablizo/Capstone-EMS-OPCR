@@ -117,5 +117,8 @@ INSERT INTO users (id, name, email, role, office_id) VALUES
 ('11000000-0000-0000-0000-000000000006', 'Paolo Ramos',     'pramos@pup.edu.ph',     'staff',           '00000000-0000-0000-0000-000000000002'),
 ('11000000-0000-0000-0000-000000000007', 'Elena Bautista',  'ebautista@pup.edu.ph',  'subsystem_admin', '00000000-0000-0000-0000-000000000003'),
 ('11000000-0000-0000-0000-000000000008', 'Marco Flores',    'mflores@pup.edu.ph',    'staff',           '00000000-0000-0000-0000-000000000003'),
-('11000000-0000-0000-0000-000000000009', 'Dr. Ricardo Lim', 'rlim@pup.edu.ph',       'opcr_evaluator',  '00000000-0000-0000-0000-000000000001')
+('11000000-0000-0000-0000-000000000009', 'Dr. Ricardo Lim', 'rlim@pup.edu.ph',       'opcr_evaluator',  '00000000-0000-0000-0000-000000000001'),
+-- Sprint 3 demo accounts: Academic Office (password hash: 'demo123' via argon2id in ARMS)
+('11000000-0000-0000-0000-000000000010', 'Dr. Ana Reyes',   'academic_admin@ems.ph', 'subsystem_admin', '00000000-0000-0000-0000-000000000002'),
+('11000000-0000-0000-0000-000000000011', 'Ben Santos',      'academic_staff@ems.ph', 'staff',           '00000000-0000-0000-0000-000000000002')
 ON CONFLICT (id) DO NOTHING;
