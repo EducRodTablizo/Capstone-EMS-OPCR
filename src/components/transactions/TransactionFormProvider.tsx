@@ -94,30 +94,32 @@ function buildServiceSpecificSchema(serviceConfig?: ServiceConfig) {
 }
 
 function getValidationSchema(serviceConfig?: ServiceConfig) {
-  let schema: any = baseFormSchema.extend({
+  type DynamicSchema = z.ZodObject<z.ZodRawShape>
+  let schema: DynamicSchema = baseFormSchema.extend({
     service_specific_data: buildServiceSpecificSchema(serviceConfig),
-  })
+  }) as DynamicSchema
 
   if (serviceConfig?.clientRequirements?.studentNumber) {
     schema = schema.extend({
       student_number: z.string().trim().min(1, 'Student number is required'),
-    })
+    }) as DynamicSchema
   }
 
   if (serviceConfig?.clientRequirements?.course) {
     schema = schema.extend({
       course: z.string().trim().min(1, 'Course / Program is required'),
-    })
+    }) as DynamicSchema
   }
 
   if (serviceConfig?.clientRequirements?.yearLevel) {
     schema = schema.extend({
       year_level: z.string().trim().min(1, 'Year level is required'),
-    })
+    }) as DynamicSchema
   }
 
-  return schema.superRefine((data: any, ctx: z.RefinementCtx) => {
-    if (data.student_number?.trim() && !studentNumberRegex.test(data.student_number.trim())) {
+  return schema.superRefine((data: unknown, ctx: z.RefinementCtx) => {
+    const d = data as { student_number?: string; client_type?: string; organization?: string }
+    if (d.student_number?.trim() && !studentNumberRegex.test(d.student_number.trim())) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Student number must follow YYYY-XXXXX-CM-0',
@@ -125,7 +127,7 @@ function getValidationSchema(serviceConfig?: ServiceConfig) {
       })
     }
 
-    if (data.client_type === 'Organization' && !data.organization?.trim()) {
+    if (d.client_type === 'Organization' && !d.organization?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Organization / Institution is required for organization clients',
@@ -145,7 +147,7 @@ export function TransactionFormProvider({ services, defaultValues, open, childre
       const selectedService = services.find((service) => service.id === serviceId)
       const selectedServiceConfig = selectedService ? getServiceConfigByName(selectedService.name) : undefined
       const schema = getValidationSchema(selectedServiceConfig)
-      return zodResolver(schema)(values as any, context as any, options as any) as any
+      return zodResolver(schema as z.ZodType<TransactionFormValues>)(values, context, options)
     },
   })
 

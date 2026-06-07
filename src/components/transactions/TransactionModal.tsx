@@ -36,7 +36,7 @@ const ASSIGNED_TO_OPTIONS = [
 function TransactionModalInner({ open, onOpenChange, services, currentUser, onCreated }: TransactionModalProps) {
   const { methods, selectedService, selectedServiceConfig } = useTransactionForm()
   const { handleSubmit, control, formState } = methods
-  const errors = formState.errors as Record<string, any>
+  const errors = formState.errors as Record<string, { message?: string }>
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 

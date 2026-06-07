@@ -1,4 +1,4 @@
-import { Controller } from 'react-hook-form'
+import { Controller, type Control } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -6,10 +6,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { useTransactionForm } from './TransactionFormProvider'
 import { DocumentationChecklist } from './DocumentationChecklist'
 import type { ServiceField } from '@/config/serviceConfig'
+import type { TransactionFormValues } from './transactionTypes'
 
-function renderField(field: ServiceField, control: any, errors: any) {
+function renderField(field: ServiceField, control: Control<TransactionFormValues>, errors: Record<string, unknown>) {
   const fieldName = `service_specific_data.${field.name}` as const
-  const errorMessage = (errors?.[field.name] as any)?.message
+  const errorMessage = (errors?.[field.name] as { message?: string } | undefined)?.message
 
   if (field.type === 'textarea') {
     return (

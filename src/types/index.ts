@@ -67,6 +67,7 @@ export interface Service {
   sla_target_seconds: number
   sla_display: string
   is_active: boolean
+  is_na?: boolean  // EMS-004: N/A services are excluded from the service selector
 }
 
 // ─── Transaction ─────────────────────────────────────────────────────────────
@@ -74,6 +75,16 @@ export interface Service {
 export type TransactionStatus = 'pending' | 'in_progress' | 'completed'
 export type DocumentaryStatus = 'complete' | 'incomplete' | 'for_compliance'
 export type SlaStatus = 'compliant' | 'non_compliant' | 'pending_computation'
+
+// ─── Audit ────────────────────────────────────────────────────────────────────
+
+/** Classifies every write operation that generates an audit log entry (EMS-024) */
+export type ActionType =
+  | 'CREATE'
+  | 'STATUS_CHANGE'
+  | 'ASSIGNMENT'
+  | 'DOCUMENTARY_CHANGE'
+  | 'REMARKS_UPDATE'
 
 export interface AuditTimelineItem {
   id: string
@@ -111,6 +122,8 @@ export interface Transaction {
   service_specific_data?: Record<string, unknown> | null
   audit_timeline?: AuditTimelineItem[]
   remarks: string | null
+  intake_data?: Record<string, string> | null
+  is_locked: boolean      // EMS-025: set true atomically when status → completed
   created_at: string
   updated_at: string
 }
@@ -118,10 +131,13 @@ export interface Transaction {
 export interface TransactionStatusHistory {
   id: string
   transaction_id: string
+  action_type: ActionType            // EMS-024: classifies the write operation
   old_status: TransactionStatus | null
   new_status: TransactionStatus
   documentary_old: DocumentaryStatus | null
   documentary_new: DocumentaryStatus | null
+  old_value: string | null           // EMS-024: human-readable previous value
+  new_value: string | null           // EMS-024: human-readable new value
   changed_by: string
   changed_by_name: string
   changed_at: string
@@ -155,6 +171,7 @@ export interface CreateTransactionDto {
   remarks?: string
   documentation_status?: DocumentaryStatus
   service_specific_data?: Record<string, unknown>
+  intake_data?: Record<string, string>  // EMS-004: dynamic intake form data
 }
 
 export interface UpdateTransactionStatusDto {

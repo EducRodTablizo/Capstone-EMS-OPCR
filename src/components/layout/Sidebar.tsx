@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, ClipboardList,
-  FolderOpen, BarChart3, ChevronDown, ChevronRight
+  FolderOpen, BarChart3, ChevronDown, ChevronRight, ScrollText,
 } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { useSidebar } from './AppLayout'
@@ -10,9 +10,11 @@ import { cn } from '@/utils/cn'
 import { toast } from '@/hooks/useToast'
 import PUPLogo from '../../Asset/PUP_LOGO.png'
 
+type NavIcon = React.ComponentType<{ className?: string }>
+
 interface SidebarGroupProps {
   label: string
-  icon: any
+  icon: NavIcon
   isOpen: boolean
   onToggle: () => void
   isCollapsed: boolean
@@ -89,7 +91,7 @@ export function Sidebar() {
     })
   }
 
-  const renderLink = (to: string, label: string, icon: any = null, isMock = false) => {
+  const renderLink = (to: string, label: string, icon: NavIcon | null = null, isMock = false) => {
     const Icon = icon
 
     const activeClass = "bg-[#7a0c0c] text-white font-semibold border-l-4 border-[#C8960C]"
@@ -220,6 +222,11 @@ export function Sidebar() {
             {renderLink('/records/status', 'Documentary Status', null, true)}
             {renderLink('/records/reports', 'Documentary Reports', null, true)}
           </SidebarGroup>
+        )}
+
+        {/* Audit Log — EMS-026 (Admin & OPCR only) */}
+        {(user?.role === 'subsystem_admin' || user?.role === 'opcr_evaluator') && (
+          renderLink('/audit-log', 'Audit Log', ScrollText)
         )}
 
         {/* Reports Dropdown */}

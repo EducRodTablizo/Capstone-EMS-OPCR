@@ -1,6 +1,8 @@
 import { Controller } from 'react-hook-form'
 import { useTransactionForm } from './TransactionFormProvider'
 import { Label } from '@/components/ui/label'
+import type { FieldErrors } from 'react-hook-form'
+import type { TransactionFormValues } from './transactionTypes'
 
 interface DocumentationChecklistProps {
   items: { name: string; label: string }[]
@@ -9,7 +11,7 @@ interface DocumentationChecklistProps {
 export function DocumentationChecklist({ items }: DocumentationChecklistProps) {
   const { methods } = useTransactionForm()
   const { control, formState } = methods
-  const errors = formState.errors.service_specific_data as any
+  const errors = formState.errors as FieldErrors<TransactionFormValues>
 
   return (
     <div className="space-y-3 rounded-xl border border-border bg-muted/50 p-4">
@@ -37,7 +39,7 @@ export function DocumentationChecklist({ items }: DocumentationChecklistProps) {
           />
         ))}
       </div>
-      {errors?.documentaryCompliance && (
+      {errors?.service_specific_data && (
         <p className="text-xs text-destructive">Please complete all documentary compliance items.</p>
       )}
     </div>

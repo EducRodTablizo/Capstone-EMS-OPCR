@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   ArrowLeft, Clock, User2, AlertTriangle, CheckCircle2,
-  Lock, RotateCcw,
+  Lock, RotateCcw, PlusCircle, RefreshCw, UserCheck, FileText, MessageSquare,
 } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import {
@@ -10,7 +10,7 @@ import {
   updateTransactionStatusApi, updateDocumentaryStatusApi,
   assignTransactionApi, getUsersApi,
 } from '@/api/mockApi'
-import type { Transaction, TransactionStatusHistory, User, TransactionStatus, DocumentaryStatus } from '@/types'
+import type { Transaction, TransactionStatusHistory, User, TransactionStatus, DocumentaryStatus, ActionType } from '@/types'
 import { TopBar } from '@/components/layout/TopBar'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -71,7 +71,8 @@ export function TransactionDetailPage() {
   const [showAssignConfirm, setShowAssignConfirm] = useState(false)
   const [pendingAssignee, setPendingAssignee] = useState<User | null>(null)
 
-  const canModify = user?.role !== 'opcr_evaluator' && txn?.status !== 'completed'
+  // EMS-025: locked = completed (is_locked set atomically on completion)
+  const canModify = user?.role !== 'opcr_evaluator' && !txn?.is_locked
 
   useEffect(() => {
     if (!id) return
@@ -178,13 +179,22 @@ export function TransactionDetailPage() {
   }
 
   function getHistoryLabel(item: TransactionStatusHistory) {
-    if (item.old_status === null && item.new_status === 'pending') {
-      return 'Created'
+    switch (item.action_type) {
+      case 'CREATE':         return 'Transaction Created'
+      case 'STATUS_CHANGE':  return `Status Changed`
+      case 'ASSIGNMENT':     return 'Assignee Updated'
+      case 'DOCUMENTARY_CHANGE': return 'Documentary Status Updated'
+      case 'REMARKS_UPDATE': return 'Remarks Updated'
+      default:               return item.remarks ?? 'Log Entry'
     }
-    if (item.remarks?.startsWith('Reassigned')) {
-      return item.remarks
-    }
-    return `Status: ${item.old_status} → ${item.new_status}`
+  }
+
+  const ACTION_ICON: Record<ActionType, typeof PlusCircle> = {
+    CREATE:             PlusCircle,
+    STATUS_CHANGE:      RefreshCw,
+    ASSIGNMENT:         UserCheck,
+    DOCUMENTARY_CHANGE: FileText,
+    REMARKS_UPDATE:     MessageSquare,
   }
 
   if (loading) {
@@ -213,8 +223,8 @@ export function TransactionDetailPage() {
           Back to Transactions
         </Link>
 
-        {/* Completed read-only notice */}
-        {txn.status === 'completed' && (
+        {/* EMS-025: Completed – Read Only lock notice */}
+        {txn.is_locked && (
           <div className="flex items-center gap-2 rounded-lg border border-border bg-[#E6F1FB] px-4 py-3 mb-5">
             <Lock className="h-4 w-4 text-[#1B3A6B] shrink-0" />
             <p className="text-sm text-[#1B3A6B] font-medium">
@@ -485,7 +495,7 @@ export function TransactionDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Audit Timeline */}
+            {/* Audit Timeline — EMS-015 */}
             <Card className="rounded-xl border border-border shadow-sm bg-white">
               <CardHeader className="pb-3 border-b border-border/80">
                 <CardTitle className="section-header">Audit Timeline</CardTitle>
@@ -494,21 +504,49 @@ export function TransactionDetailPage() {
                 <div className="relative">
                   <div className="absolute left-2 top-0 bottom-0 w-px bg-border" />
                   <div className="space-y-4">
-                    {history.map((h) => (
-                      <div key={h.id} className="relative pl-6">
-                        <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-background border-2 border-[#580000] flex items-center justify-center">
-                          <div className="w-1.5 h-1.5 rounded-full bg-[#580000]" />
+                    {history.map((h) => {
+                      const Icon = ACTION_ICON[h.action_type] ?? RotateCcw
+                      const hasValueChange = (h.old_value !== null || h.new_value !== null) && h.action_type !== 'CREATE'
+                      return (
+                        <div key={h.id} className="relative pl-6">
+                          <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-background border-2 border-[#580000] flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#580000]" />
+                          </div>
+                          <div className="space-y-0.5">
+                            {/* AC-1: action label + AC-3: action type badge */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <p className="text-xs font-semibold text-foreground">
+                                {getHistoryLabel(h)}
+                              </p>
+                              <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 uppercase tracking-wide">
+                                {h.action_type.replace(/_/g, ' ')}
+                              </span>
+                            </div>
+                            {/* AC-2: actor + AC-5: timestamp */}
+                            <p className="text-[11px] text-muted-foreground">
+                              {h.changed_by_name} · {formatDateTime(h.changed_at)}
+                            </p>
+                            {/* AC-4: old → new value */}
+                            {hasValueChange && (
+                              <p className="text-[11px] text-muted-foreground font-mono bg-muted/30 border border-border/40 rounded px-2 py-1 mt-1">
+                                {h.old_value ?? '—'} <span className="text-primary/80 mx-1">→</span> {h.new_value ?? '—'}
+                              </p>
+                            )}
+                            {h.documentary_old !== h.documentary_new && h.action_type === 'DOCUMENTARY_CHANGE' && (
+                              <p className="text-[11px] text-muted-foreground italic">
+                                Docs: {h.documentary_old ?? '—'} → {h.documentary_new}
+                              </p>
+                            )}
+                            {h.remarks && h.action_type !== 'CREATE' && (
+                              <p className="text-xs text-muted-foreground italic mt-1 bg-muted/30 p-1.5 rounded border border-border/40">
+                                {h.remarks}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs font-semibold text-foreground">
-                            {getHistoryLabel(h)}
-                            {h.documentary_old !== h.documentary_new && ` · Docs: ${h.documentary_old ?? '—'} → ${h.documentary_new}`}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">{h.changed_by_name} · {formatDateTime(h.changed_at)}</p>
-                          {h.remarks && <p className="text-xs text-muted-foreground italic mt-1 bg-muted/30 p-1.5 rounded border border-border/40">{h.remarks}</p>}
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               </CardContent>

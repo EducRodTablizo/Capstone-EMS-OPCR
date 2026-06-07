@@ -98,6 +98,7 @@ const svc = (
   sla_target_seconds: parseSlaToSeconds(slaDisplay),
   sla_display: slaDisplay,
   is_active: true,
+  is_na: false,   // EMS-004: default to false; set true for N/A (placeholder) services
 })
 
 export const MOCK_SERVICES: Service[] = [
@@ -163,6 +164,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     sla_status: 'non_compliant', is_sla_breached: true,
     client_name: 'Juan dela Torre', remarks: 'Referred to PGH',
     intake_data: null,
+    is_locked: true,   // EMS-025: completed
     created_at: daysAgo(0, 2), updated_at: daysAgo(0, 1.5),
   },
   {
@@ -176,6 +178,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     sla_status: 'compliant', is_sla_breached: false,
     client_name: 'Maria Gomez', remarks: null,
     intake_data: null,
+    is_locked: true,   // EMS-025: completed
     created_at: daysAgo(0, 3), updated_at: daysAgo(0, 2.9),
   },
   {
@@ -189,6 +192,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     sla_status: 'pending_computation', is_sla_breached: false,
     client_name: 'Pedro Santos', remarks: null,
     intake_data: null,
+    is_locked: false,
     created_at: daysAgo(0, 1), updated_at: daysAgo(0, 0.5),
   },
   {
@@ -202,6 +206,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     sla_status: 'pending_computation', is_sla_breached: false,
     client_name: 'BSIT Student Council', remarks: 'Waiting for documentary requirements',
     intake_data: null,
+    is_locked: false,
     created_at: daysAgo(0, 0.5), updated_at: daysAgo(0, 0.5),
   },
   // Academic Office transactions
@@ -216,6 +221,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     sla_status: 'compliant', is_sla_breached: false,
     client_name: 'Ana Villanueva', remarks: null,
     intake_data: null,
+    is_locked: true,   // EMS-025: completed
     created_at: daysAgo(1, 4), updated_at: daysAgo(1, 3.7),
   },
   {
@@ -229,6 +235,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     sla_status: 'pending_computation', is_sla_breached: false,
     client_name: 'Carlo Mendoza', remarks: 'Requirements submitted, pending dean approval',
     intake_data: null,
+    is_locked: false,
     created_at: daysAgo(0, 2), updated_at: daysAgo(0, 1),
   },
   // OSAS transactions
@@ -243,6 +250,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     sla_status: 'non_compliant', is_sla_breached: true,
     client_name: 'Rosa Aquino', remarks: 'Student had to retrieve additional form',
     intake_data: null,
+    is_locked: true,   // EMS-025: completed
     created_at: daysAgo(0, 1), updated_at: daysAgo(0, 0.9),
   },
   {
@@ -256,26 +264,36 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     sla_status: 'pending_computation', is_sla_breached: false,
     client_name: 'Andres Navarro', remarks: null,
     intake_data: null,
+    is_locked: false,
     created_at: daysAgo(0, 0.3), updated_at: daysAgo(0, 0.3),
   },
 ]
 
 export const MOCK_HISTORY: TransactionStatusHistory[] = [
   {
-    id: 'h-1', transaction_id: 'txn-1', old_status: null, new_status: 'pending',
+    id: 'h-1', transaction_id: 'txn-1',
+    action_type: 'CREATE',
+    old_status: null, new_status: 'pending',
     documentary_old: null, documentary_new: 'complete',
+    old_value: null, new_value: 'pending',
     changed_by: 'usr-2', changed_by_name: 'Jose Reyes',
     changed_at: daysAgo(0, 2), remarks: 'Transaction created',
   },
   {
-    id: 'h-2', transaction_id: 'txn-1', old_status: 'pending', new_status: 'in_progress',
+    id: 'h-2', transaction_id: 'txn-1',
+    action_type: 'STATUS_CHANGE',
+    old_status: 'pending', new_status: 'in_progress',
     documentary_old: 'complete', documentary_new: 'complete',
+    old_value: 'pending', new_value: 'in_progress',
     changed_by: 'usr-2', changed_by_name: 'Jose Reyes',
     changed_at: daysAgo(0, 1.9), remarks: null,
   },
   {
-    id: 'h-3', transaction_id: 'txn-1', old_status: 'in_progress', new_status: 'completed',
+    id: 'h-3', transaction_id: 'txn-1',
+    action_type: 'STATUS_CHANGE',
+    old_status: 'in_progress', new_status: 'completed',
     documentary_old: 'complete', documentary_new: 'complete',
+    old_value: 'in_progress', new_value: 'completed',
     changed_by: 'usr-2', changed_by_name: 'Jose Reyes',
     changed_at: daysAgo(0, 1.5), remarks: 'Referred to PGH',
   },

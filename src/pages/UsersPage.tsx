@@ -313,7 +313,7 @@ export function UsersPage() {
               <CardContent className="py-3 flex flex-wrap gap-4 items-center">
                 <div className="flex items-center gap-2">
                   <Label className="text-xs text-muted-foreground shrink-0 font-semibold">Filter Role:</Label>
-                  <Select value={filterRole} onValueChange={(v) => { setFilterRole(v as any); setCurrentPage(1); }}>
+                  <Select value={filterRole} onValueChange={(v) => { setFilterRole(v as 'all' | UserRole); setCurrentPage(1); }}>
                     <SelectTrigger className="w-40 h-9">
                       <SelectValue placeholder="Role" />
                     </SelectTrigger>
@@ -328,7 +328,7 @@ export function UsersPage() {
 
                 <div className="flex items-center gap-2">
                   <Label className="text-xs text-muted-foreground shrink-0 font-semibold">Filter Status:</Label>
-                  <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v as any); setCurrentPage(1); }}>
+                  <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v as 'all' | 'active' | 'inactive'); setCurrentPage(1); }}>
                     <SelectTrigger className="w-36 h-9">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>

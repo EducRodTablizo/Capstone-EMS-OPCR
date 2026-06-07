@@ -11,6 +11,7 @@ import { TransactionsPage } from './pages/TransactionsPage'
 import { TransactionDetailPage } from './pages/TransactionDetailPage'
 import { SLAReviewPage } from './pages/SLAReviewPage'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
+import { AuditLogPage } from './pages/AuditLogPage'
 
 const queryClient = new QueryClient()
 
@@ -91,6 +92,16 @@ export default function App() {
                   element={
                     <ProtectedRoute allowedRoles={['subsystem_admin', 'opcr_evaluator']}>
                       <SLAReviewPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* EMS-026 — Audit Log — Subsystem Admin + OPCR Evaluator */}
+                <Route
+                  path="audit-log"
+                  element={
+                    <ProtectedRoute allowedRoles={['subsystem_admin', 'opcr_evaluator']}>
+                      <AuditLogPage />
                     </ProtectedRoute>
                   }
                 />

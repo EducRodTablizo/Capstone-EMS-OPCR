@@ -67,9 +67,10 @@ export async function getUsersApi(officeId?: string): Promise<User[]> {
 
 export async function getServicesApi(officeId?: string): Promise<Service[]> {
   await delay()
+  // EMS-004: exclude N/A services (is_na === true) from the service selector
   return officeId
-    ? MOCK_SERVICES.filter((s) => s.office_id === officeId && s.is_active)
-    : MOCK_SERVICES.filter((s) => s.is_active)
+    ? MOCK_SERVICES.filter((s) => s.office_id === officeId && s.is_active && !s.is_na)
+    : MOCK_SERVICES.filter((s) => s.is_active && !s.is_na)
 }
 
 // ─── Transactions ────────────────────────────────────────────────────────────
@@ -141,22 +142,26 @@ export async function createTransactionApi(
     ],
     remarks: dto.remarks ?? null,
     intake_data: dto.intake_data ?? null,
+    is_locked: false,              // EMS-025: set true atomically when completed
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }
 
   _transactions = [newTxn, ..._transactions]
 
-  // Record initial history
+  // Record initial history (EMS-024: action_type + old/new value)
   _history.push({
     id: `h-${Date.now()}`,
     transaction_id: newTxn.id,
+    action_type: 'CREATE',
     old_status: null, new_status: 'pending',
     documentary_old: null, documentary_new: documentaryStatus,
+    old_value: null, new_value: 'pending',
     changed_by: createdBy.id, changed_by_name: createdBy.name,
     changed_at: newTxn.time_in,
     remarks: 'Transaction created',
   })
+  dispatchToARMS('transaction.created', newTxn.id, createdBy.id)
 
   return newTxn
 }
@@ -191,15 +196,18 @@ export async function assignTransactionApi(
   _history.push({
     id: `h-${Date.now()}`,
     transaction_id: id,
+    action_type: 'ASSIGNMENT',
     old_status: txn.status,
     new_status: txn.status,
     documentary_old: txn.documentary_status,
     documentary_new: txn.documentary_status,
-    changed_by: actingUser.id,
-    changed_by_name: actingUser.name,
+    old_value: txn.assigned_to_name ?? 'Unassigned',
+    new_value: assignee.name,
+    changed_by: actingUser.id, changed_by_name: actingUser.name,
     changed_at: updated.updated_at,
     remarks: `Reassigned from ${txn.assigned_to_name ?? 'Unassigned'} to ${assignee.name}`,
   })
+  dispatchToARMS('transaction.assigned', id, actingUser.id)
 
   return updated
 }
@@ -241,6 +249,7 @@ export async function updateTransactionStatusApi(
     processing_time_seconds: processingTime,
     sla_status: slaStatus,
     is_sla_breached: isBreach,
+    is_locked: dto.status === 'completed', // EMS-025: lock atomically on completion
     updated_at: now,
   }
   _transactions[idx] = updated
@@ -248,11 +257,14 @@ export async function updateTransactionStatusApi(
   _history.push({
     id: `h-${Date.now()}`,
     transaction_id: id,
+    action_type: 'STATUS_CHANGE',
     old_status: txn.status, new_status: dto.status,
     documentary_old: txn.documentary_status, documentary_new: txn.documentary_status,
+    old_value: txn.status, new_value: dto.status,
     changed_by: actingUser.id, changed_by_name: actingUser.name,
     changed_at: now, remarks: dto.remarks ?? null,
   })
+  dispatchToARMS('transaction.status_changed', id, actingUser.id)
 
   return updated
 }
@@ -281,11 +293,14 @@ export async function updateDocumentaryStatusApi(
   _history.push({
     id: `h-${Date.now()}`,
     transaction_id: id,
+    action_type: 'DOCUMENTARY_CHANGE',
     old_status: txn.status, new_status: txn.status,
     documentary_old: txn.documentary_status, documentary_new: dto.documentary_status,
+    old_value: txn.documentary_status, new_value: dto.documentary_status,
     changed_by: actingUser.id, changed_by_name: actingUser.name,
     changed_at: now, remarks: dto.remarks ?? null,
   })
+  dispatchToARMS('transaction.documentary_changed', id, actingUser.id)
 
   return updated
 }
@@ -297,6 +312,46 @@ export async function getTransactionHistoryApi(transactionId: string): Promise<T
   return _history
     .filter((h) => h.transaction_id === transactionId)
     .sort((a, b) => new Date(a.changed_at).getTime() - new Date(b.changed_at).getTime())
+}
+
+/**
+ * EMS-024: ARMS dispatch stub (MS-4 audit-relay event).
+ * Replace with Kafka producer call / HTTP webhook when ARMS integration is wired.
+ */
+function dispatchToARMS(event: string, transactionId: string, actorId: string): void {
+  // TODO: publish to Kafka topic `ems.transaction.<event>` via MS-4
+  console.debug('[ARMS stub] dispatching', { event, transactionId, actorId, ts: new Date().toISOString() })
+}
+
+/**
+ * EMS-026: Retrieve all audit log entries across all transactions for the office.
+ * Supports filtering by office, date range, and action type.
+ */
+export async function getAuditLogApi(
+  officeId?: string,
+  filters?: { actionType?: string; from?: string; to?: string },
+): Promise<TransactionStatusHistory[]> {
+  await delay()
+  const officeTransactionIds = new Set(
+    (officeId ? _transactions.filter((t) => t.office_id === officeId) : _transactions)
+      .map((t) => t.id),
+  )
+
+  let log = _history.filter((h) => officeTransactionIds.has(h.transaction_id))
+
+  if (filters?.actionType && filters.actionType !== 'ALL') {
+    log = log.filter((h) => h.action_type === filters.actionType)
+  }
+  if (filters?.from) {
+    const from = new Date(filters.from).getTime()
+    log = log.filter((h) => new Date(h.changed_at).getTime() >= from)
+  }
+  if (filters?.to) {
+    const to = new Date(filters.to).getTime()
+    log = log.filter((h) => new Date(h.changed_at).getTime() <= to)
+  }
+
+  return log.sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime())
 }
 
 // ─── Dashboard Stats ─────────────────────────────────────────────────────────
