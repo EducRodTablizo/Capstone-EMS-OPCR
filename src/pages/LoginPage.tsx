@@ -8,10 +8,13 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 
 const DEMO_ACCOUNTS = [
-  { email: 'admin@ems.ph', password: 'admin123', role: 'Subsystem Admin (Admin Office)' },
-  { email: 'staff@ems.ph', password: 'staff123', role: 'Staff (Admin Office)' },
-  { email: 'opcr@ems.ph', password: 'opcr123', role: 'OPCR Evaluator' },
-  { email: 'ebautista@pup.edu.ph', password: 'admin123', role: 'Subsystem Admin (OSAS)' },
+  { email: 'admin@ems.ph',           password: 'admin123', role: 'Subsystem Admin',  office: 'Administrative Office' },
+  { email: 'staff@ems.ph',           password: 'staff123', role: 'Staff',            office: 'Administrative Office' },
+  { email: 'opcr@ems.ph',            password: 'opcr123',  role: 'OPCR Evaluator',   office: 'Cross-Office' },
+  { email: 'ebautista@pup.edu.ph',   password: 'admin123', role: 'Subsystem Admin',  office: 'OSAS' },
+  // Sprint 3 Academic Office demo accounts
+  { email: 'academic_admin@ems.ph',  password: 'demo123',  role: 'Subsystem Admin',  office: 'Academic Office' },
+  { email: 'academic_staff@ems.ph',  password: 'demo123',  role: 'Staff',            office: 'Academic Office' },
 ]
 
 export function LoginPage() {
@@ -142,8 +145,8 @@ export function LoginPage() {
                   className="w-full flex items-center justify-between px-3 py-2 rounded-md text-left hover:bg-accent transition-colors group"
                 >
                   <div>
-                    <p className="text-xs font-medium text-foreground">{acc.role}</p>
-                    <p className="text-[11px] text-muted-foreground">{acc.email}</p>
+                    <p className="text-xs font-medium text-foreground">{acc.role} · {acc.office}</p>
+                    <p className="text-[11px] text-muted-foreground">{acc.email} / {acc.password}</p>
                   </div>
                   <span className="text-[10px] text-muted-foreground group-hover:text-primary transition-colors">
                     Use →

@@ -61,6 +61,17 @@ export const MOCK_USERS: User[] = [
     role: 'opcr_evaluator', office_id: 'off-1', office_code: 'ADMIN_OFFICE',
     office_name: 'Administrative Office', is_active: true, created_at: '2026-01-09T00:00:00Z',
   },
+  // ─── Sprint 3 Demo Accounts — Academic Office ─────────────────────────────
+  {
+    id: 'usr-10', name: 'Dr. Ana Reyes', email: 'academic_admin@ems.ph',
+    role: 'subsystem_admin', office_id: 'off-2', office_code: 'ACADEMIC_OFFICE',
+    office_name: 'Academic Office', is_active: true, created_at: '2026-01-10T00:00:00Z',
+  },
+  {
+    id: 'usr-11', name: 'Ben Santos', email: 'academic_staff@ems.ph',
+    role: 'staff', office_id: 'off-2', office_code: 'ACADEMIC_OFFICE',
+    office_name: 'Academic Office', is_active: true, created_at: '2026-01-11T00:00:00Z',
+  },
 ]
 
 // Mock credentials for demo login
@@ -75,7 +86,10 @@ export const MOCK_CREDENTIALS: Record<string, { password: string; userId: string
   // convenience aliases
   'admin@ems.ph': { password: 'admin123', userId: 'usr-1' },
   'staff@ems.ph': { password: 'staff123', userId: 'usr-2' },
-  'opcr@ems.ph': { password: 'opcr123', userId: 'usr-9' },
+  'opcr@ems.ph':  { password: 'opcr123',  userId: 'usr-9' },
+  // Sprint 3 demo accounts — Academic Office
+  'academic_admin@ems.ph': { password: 'demo123', userId: 'usr-10' },
+  'academic_staff@ems.ph': { password: 'demo123', userId: 'usr-11' },
 }
 
 // ─── Services (from OPCR SLA CSV) ────────────────────────────────────────────

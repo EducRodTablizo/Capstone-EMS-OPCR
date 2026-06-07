@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, Filter, ArrowRight } from 'lucide-react'
+import { Plus, Search, Filter, ArrowRight, Building2, ShieldCheck } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { getTransactionsApi, getServicesApi } from '@/api/mockApi'
 import type { Transaction, Service, TransactionStatus } from '@/types'
@@ -54,10 +54,29 @@ export function TransactionsPage() {
       <TopBar />
 
       <div className="flex-1 p-6 space-y-5 overflow-auto">
-        {/* Page Title */}
+        {/* Page Title — EMS-014: office name prominently displayed */}
         <div>
-          <h2 className="page-title text-2xl">Service Transactions</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Track and update active OPCR transactions.</p>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h2 className="page-title text-2xl">Service Transactions</h2>
+            {user?.office_name && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary px-2.5 py-1 text-xs font-semibold">
+                <Building2 className="h-3 w-3" />
+                {user.office_name}
+              </span>
+            )}
+            {user?.role === 'opcr_evaluator' && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-1 text-xs font-semibold">
+                <ShieldCheck className="h-3 w-3" />
+                All Offices · Read-only
+              </span>
+            )}
+          </div>
+          {/* EMS-013: office-scoped data isolation confirmation */}
+          <p className="text-xs text-muted-foreground mt-1">
+            {user?.role === 'opcr_evaluator'
+              ? 'Viewing transactions across all offices (OPCR Evaluator access).'
+              : `Office-scoped view — only transactions from ${user?.office_name ?? 'your office'} are visible.`}
+          </p>
         </div>
 
         {/* Toolbar */}
