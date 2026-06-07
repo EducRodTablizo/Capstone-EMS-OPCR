@@ -14,17 +14,17 @@ export const OFFICES: Office[] = [
 export const MOCK_USERS: User[] = [
   // Administrative Office
   {
-    id: 'usr-1', name: 'Maria Santos', email: 'msantos@pup.edu.ph',
+    id: 'usr-1', name: 'John Michael Garcia', email: 'Garcia@pup.edu.ph',
     role: 'subsystem_admin', office_id: 'off-1', office_code: 'ADMIN_OFFICE',
     office_name: 'Administrative Office', is_active: true, created_at: '2026-01-01T00:00:00Z',
   },
   {
-    id: 'usr-2', name: 'Jose Reyes', email: 'jreyes@pup.edu.ph',
+    id: 'usr-2', name: 'Kenneth Yulip', email: 'Yulip@pup.edu.ph',
     role: 'staff', office_id: 'off-1', office_code: 'ADMIN_OFFICE',
     office_name: 'Administrative Office', is_active: true, created_at: '2026-01-02T00:00:00Z',
   },
   {
-    id: 'usr-3', name: 'Ana Cruz', email: 'acruz@pup.edu.ph',
+    id: 'usr-3', name: 'Ryan Bill Donayre', email: 'Donayre@pup.edu.ph',
     role: 'staff', office_id: 'off-1', office_code: 'ADMIN_OFFICE',
     office_name: 'Administrative Office', is_active: true, created_at: '2026-01-03T00:00:00Z',
   },
@@ -46,7 +46,7 @@ export const MOCK_USERS: User[] = [
   },
   // OSAS
   {
-    id: 'usr-7', name: 'Elena Bautista', email: 'ebautista@pup.edu.ph',
+    id: 'usr-7', name: 'Mikhail Reveche', email: 'ebautista@pup.edu.ph',
     role: 'subsystem_admin', office_id: 'off-3', office_code: 'OSAS',
     office_name: 'OSAS', is_active: true, created_at: '2026-01-07T00:00:00Z',
   },
@@ -57,7 +57,7 @@ export const MOCK_USERS: User[] = [
   },
   // OPCR Evaluator (cross-office)
   {
-    id: 'usr-9', name: 'Dr. Ricardo Lim', email: 'rlim@pup.edu.ph',
+    id: 'usr-9', name: 'Pau Carillio', email: 'Pau@pup.edu.ph',
     role: 'opcr_evaluator', office_id: 'off-1', office_code: 'ADMIN_OFFICE',
     office_name: 'Administrative Office', is_active: true, created_at: '2026-01-09T00:00:00Z',
   },
@@ -117,7 +117,7 @@ export const MOCK_SERVICES: Service[] = [
   // Administrative Office – Admin
   svc('svc-12', 'Campus Equipment / Materials Borrowing', 'Administrative', 'General', 'off-1', 'ADMIN_OFFICE', '15 min'),
   svc('svc-13', 'Facility Reservation Request', 'Administrative', 'General', 'off-1', 'ADMIN_OFFICE', '12 min'),
-  svc('svc-14', 'Permission to Conduct an Activity (Activity Permit)', 'Administrative', 'General', 'off-1', 'ADMIN_OFFICE', '7 min'),
+  svc('svc-14', 'Student Development Permission', 'Administrative', 'General', 'off-1', 'ADMIN_OFFICE', '7 min'),
   svc('svc-15', 'Library Circulation (Borrowing of Library Materials)', 'Administrative', 'General', 'off-1', 'ADMIN_OFFICE', '2 min'),
   svc('svc-16', 'Academic Verification Service', 'Administrative', 'General', 'off-1', 'ADMIN_OFFICE', '2 days, 1 hr, 50 min'),
   svc('svc-17', 'Re-Admission Processing (Returning Students)', 'Administrative', 'Student', 'off-1', 'ADMIN_OFFICE', '2 days, 7 hrs, 53 min'),
@@ -130,17 +130,20 @@ export const MOCK_SERVICES: Service[] = [
   svc('svc-23', 'Processing of Request for Certification (Grades, GWA)', 'Grade & Records', 'Student', 'off-2', 'ACADEMIC_OFFICE', '37 min'),
   svc('svc-24', 'Processing of Course Accreditation (Transferees)', 'Accreditation', 'Student (Transferee)', 'off-2', 'ACADEMIC_OFFICE', '1 day, 5 hrs, 30 min'),
   // OSAS
-  svc('svc-25', 'Application for New Identification Card', 'ID Services', 'Student', 'off-3', 'OSAS', '2 days, 23 min'),
-  svc('svc-26', 'Application for Replacement of Lost Identification Card', 'ID Services', 'Student', 'off-3', 'OSAS', '2 days, 23 min'),
+  svc('svc-25', 'New ID Application', 'ID Services', 'Student', 'off-3', 'OSAS', '2 days, 23 min'),
+  svc('svc-26', 'ID Replacement', 'ID Services', 'Student', 'off-3', 'OSAS', '2 days, 23 min'),
   svc('svc-27', 'Consultation Service', 'Consultation', 'Student', 'off-3', 'OSAS', '28 min'),
   svc('svc-28', 'Counseling Service', 'Counseling', 'Student', 'off-3', 'OSAS', '44 min'),
   svc('svc-29', 'Issuance of Recommendation Letter', 'Recommendation', 'Student / Alumni', 'off-3', 'OSAS', '50 min'),
-  svc('svc-30', 'Processing of Request for On-Campus Student Activities', 'Activity Permit', 'Student / Organization', 'off-3', 'OSAS', '1 hr, 15 min'),
-  svc('svc-31', 'Processing of Application for Student Fund-Raising', 'Activity Permit', 'Student / Organization', 'off-3', 'OSAS', '6 days, 7 hrs, 5 min'),
-  svc('svc-32', 'Processing of Request for Informative Copy of Grades', 'Records', 'Student', 'off-3', 'OSAS', '1 day, 1 hr, 18 min'),
-  svc('svc-33', 'Request for Certificate of Good Moral Character', 'Good Moral', 'Student', 'off-3', 'OSAS', '12 min'),
-  svc('svc-34', 'Issuance of Good Moral Certificate', 'Good Moral', 'Student', 'off-3', 'OSAS', '1 hr, 25 min'),
-  svc('svc-35', 'Credentials Service (Transcript of Records)', 'Credentials', 'Student / Alumni', 'off-3', 'OSAS', '8 days, 5 hrs, 20 min'),
+  svc('svc-30', 'On-Campus Activity', 'Activity Permit', 'Student / Organization', 'off-3', 'OSAS', '1 hr, 15 min'),
+  svc('svc-31', 'Fundraising', 'Activity Permit', 'Student / Organization', 'off-3', 'OSAS', '6 days, 7 hrs, 5 min'),
+  svc('svc-32', 'Student Development Permission', 'Activity Permit', 'Student / Organization', 'off-3', 'OSAS', '7 min'),
+  svc('svc-33', 'Processing of Request for Informative Copy of Grades', 'Records', 'Student', 'off-3', 'OSAS', '1 day, 1 hr, 18 min'),
+  svc('svc-34', 'Good Moral Certificate', 'Good Moral', 'Student', 'off-3', 'OSAS', '12 min'),
+  svc('svc-35', 'Issuance of Good Moral Certificate', 'Good Moral', 'Student', 'off-3', 'OSAS', '1 hr, 25 min'),
+  svc('svc-36', 'Off-Campus Activity', 'Activity Permit', 'Student / Organization', 'off-3', 'OSAS', '1 hr, 15 min'),
+  svc('svc-37', 'Student Medal Request', 'Administrative', 'Student', 'off-3', 'OSAS', '25 min'),
+  svc('svc-38', 'Credentials Service (Transcript of Records)', 'Credentials', 'Student / Alumni', 'off-3', 'OSAS', '8 days, 5 hrs, 20 min'),
 ]
 
 // ─── Sample Transactions ──────────────────────────────────────────────────────
