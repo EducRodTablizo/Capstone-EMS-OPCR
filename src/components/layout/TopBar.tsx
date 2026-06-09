@@ -141,11 +141,16 @@ export function TopBar() {
 
       {/* Right side: Date Badge, Notifications & User Profile */}
       <div className="flex items-center gap-4">
+
         {/* Active Evaluation Period Badge */}
+
         <div className="hidden md:block">
-          <span className="date-header">
+
+          <span className="date-header font-bold">
             Jun 9, 2026 – Jun 10, 2026
+
           </span>
+
         </div>
 
         {/* Notification Bell */}

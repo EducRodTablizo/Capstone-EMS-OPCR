@@ -164,11 +164,12 @@ export function Sidebar() {
       <nav className="flex-1 px-3 py-4 overflow-y-auto scrollbar-none space-y-2">
         {/* MAIN Group */}
         {!isCollapsed ? (
-          <div className="px-3 pt-2 pb-1.5 text-[10px] font-bold tracking-wider text-white/40 uppercase select-none">
+  /* Inayos ko: ginawang text-yellow-500/70 (yellow na may 70% opacity) */
+          <div className="px-3 pt-4 pb-1.5 text-[10px] font-bold tracking-wider text-yellow-500/40 uppercase select-none">
             MAIN
           </div>
         ) : (
-          <div className="border-t border-white/10 my-2" />
+          <div className="border-t border-yellow-500/30 my-3" />
         )}
 
         {/* Dashboard Link */}
@@ -203,12 +204,13 @@ export function Sidebar() {
 
         {/* INSIGHTS Group */}
         {!isCollapsed ? (
-          <div className="px-3 pt-4 pb-1.5 text-[10px] font-bold tracking-wider text-white/40 uppercase select-none">
-            INSIGHTS
-          </div>
-        ) : (
-          <div className="border-t border-white/10 my-3" />
-        )}
+  /* Inayos ko: ginawang text-yellow-500/70 (yellow na may 70% opacity) */
+            <div className="px-3 pt-4 pb-1.5 text-[10px] font-bold tracking-wider text-yellow-500/40 uppercase select-none">
+              INSIGHTS
+            </div>
+          ) : (
+            <div className="border-t border-yellow-500/30 my-3" />
+          )}
 
         {/* Records Dropdown */}
         {(user?.role === 'subsystem_admin' || user?.role === 'opcr_evaluator') && (
