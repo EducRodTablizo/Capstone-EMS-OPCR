@@ -139,15 +139,15 @@ export function TopBar() {
         </nav>
       </div>
 
-      {/* Center / Right: Active Evaluation Period Badge */}
-      <div className="hidden md:block">
-        <span className="date-header">
-          Jun 9, 2026 – Jun 10, 2026
-        </span>
-      </div>
-
-      {/* Right side: Notifications & User Profile */}
+      {/* Right side: Date Badge, Notifications & User Profile */}
       <div className="flex items-center gap-4">
+        {/* Active Evaluation Period Badge */}
+        <div className="hidden md:block">
+          <span className="date-header">
+            Jun 9, 2026 – Jun 10, 2026
+          </span>
+        </div>
+
         {/* Notification Bell */}
         <div className="relative" ref={notifRef}>
           <button
