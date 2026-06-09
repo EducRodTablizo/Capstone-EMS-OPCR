@@ -176,7 +176,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     status: 'completed', documentary_status: 'complete',
     processing_time_seconds: 1860, sla_target_seconds: parseSlaToSeconds('22 min'),
     sla_status: 'non_compliant', is_sla_breached: true,
-    client_name: 'Juan dela Torre', remarks: 'Referred to PGH',
+    client_name: 'Juan dela Torre', remarks: 'Referred to Physician',
     intake_data: null,
     is_locked: true,   // EMS-025: completed
     created_at: daysAgo(0, 2), updated_at: daysAgo(0, 1.5),
@@ -309,6 +309,6 @@ export const MOCK_HISTORY: TransactionStatusHistory[] = [
     documentary_old: 'complete', documentary_new: 'complete',
     old_value: 'in_progress', new_value: 'completed',
     changed_by: 'usr-2', changed_by_name: 'Jose Reyes',
-    changed_at: daysAgo(0, 1.5), remarks: 'Referred to PGH',
+    changed_at: daysAgo(0, 1.5), remarks: 'Referred to Physician',
   },
 ]
