@@ -7,7 +7,7 @@ import React, {
 } from 'react'
 import type { JwtPayload, User, LoginDto } from '@/types'
 import { getCurrentUser, removeToken } from '@/utils/jwt'
-import { loginApi, getUsersApi } from '@/api/mockApi'
+import { loginApi, getUsersApi } from '@/api'
 
 interface AuthContextValue {
   user: User | null
