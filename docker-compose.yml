@@ -1,0 +1,173 @@
+version: '3.9'
+
+# =============================================================================
+# EMS Microservices — Docker Compose
+# Phase 1: PostgreSQL + 5 NestJS services + API Gateway
+# Phase 4: Uncomment kafka + zookeeper blocks
+# =============================================================================
+
+services:
+  # ─── Database ───────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: ems_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ems_db
+      POSTGRES_USER: ems_user
+      POSTGRES_PASSWORD: ems_pass
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./database/02_functions.sql:/docker-entrypoint-initdb.d/02_functions.sql
+      - ./database/03_triggers.sql:/docker-entrypoint-initdb.d/03_triggers.sql
+      - ./database/04_seed.sql:/docker-entrypoint-initdb.d/04_seed.sql
+      - ./database/05_sprint3_schema.sql:/docker-entrypoint-initdb.d/05_sprint3_schema.sql
+      - ./database/06_sprint3_triggers.sql:/docker-entrypoint-initdb.d/06_sprint3_triggers.sql
+      - ./database/07_contract_schema.sql:/docker-entrypoint-initdb.d/07_contract_schema.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ems_user -d ems_db']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Phase 4: Kafka (uncomment when ready) ──────────────────────────────────
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:7.4.0
+  #   container_name: ems_zookeeper
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_TICK_TIME: 2000
+  #
+  # kafka:
+  #   image: confluentinc/cp-kafka:7.4.0
+  #   container_name: ems_kafka
+  #   ports:
+  #     - '9092:9092'
+  #   depends_on: [zookeeper]
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+  #     KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+  #   healthcheck:
+  #     test: ['CMD', 'kafka-broker-api-versions', '--bootstrap-server', 'localhost:9092']
+  #     interval: 10s
+  #     retries: 5
+
+  # ─── API Gateway (:3001) ────────────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./apps/api-gateway
+      dockerfile: Dockerfile
+    container_name: ems_api_gateway
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    environment:
+      PORT: 3001
+      ARMS_JWT_SECRET: ${ARMS_JWT_SECRET:-dev_jwt_secret_change_in_production}
+      IDENTITY_SVC_URL: http://identity-office-service:3002
+      TRANSACTION_SVC_URL: http://transaction-pss-service:3003
+      AUDIT_SVC_URL: http://audit-log-service:3006
+      TIME_SVC_URL: http://time-tracking-sla-service:3004
+      DASHBOARD_SVC_URL: http://dashboard-reporting-service:3007
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ─── Identity & Office Service (:3002) ──────────────────────────────────────
+  identity-office-service:
+    build:
+      context: ./apps/identity-office-service
+      dockerfile: Dockerfile
+    container_name: ems_identity_svc
+    restart: unless-stopped
+    ports:
+      - '3002:3002'
+    environment:
+      PORT: 3002
+      DATABASE_URL: postgresql://ems_user:ems_pass@postgres:5432/ems_db
+      ARMS_BASE_URL: ${ARMS_BASE_URL:-http://arms.pup.edu.ph/api}
+      ARMS_SERVICE_TOKEN: ${ARMS_SERVICE_TOKEN:-dev_service_token}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ─── Transaction & PSS Service (:3003) ──────────────────────────────────────
+  transaction-pss-service:
+    build:
+      context: ./apps/transaction-pss-service
+      dockerfile: Dockerfile
+    container_name: ems_transaction_svc
+    restart: unless-stopped
+    ports:
+      - '3003:3003'
+    environment:
+      PORT: 3003
+      DATABASE_URL: postgresql://ems_user:ems_pass@postgres:5432/ems_db
+      PSS_BASE_URL: ${PSS_BASE_URL:-http://pss.pup.edu.ph/api}
+      PSS_API_KEY: ${PSS_API_KEY:-dev_pss_key}
+      AUDIT_SVC_URL: http://audit-log-service:3006
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ─── Time Tracking & SLA Service (:3004) ────────────────────────────────────
+  time-tracking-sla-service:
+    build:
+      context: ./apps/time-tracking-sla-service
+      dockerfile: Dockerfile
+    container_name: ems_time_svc
+    restart: unless-stopped
+    ports:
+      - '3004:3004'
+    environment:
+      PORT: 3004
+      DATABASE_URL: postgresql://ems_user:ems_pass@postgres:5432/ems_db
+      PSS_BASE_URL: ${PSS_BASE_URL:-http://pss.pup.edu.ph/api}
+      PSS_API_KEY: ${PSS_API_KEY:-dev_pss_key}
+      PSS_SLA_CALLBACK_SECRET: ${PSS_SLA_CALLBACK_SECRET:-dev_callback_secret}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ─── Audit Log Service (:3006) ──────────────────────────────────────────────
+  audit-log-service:
+    build:
+      context: ./apps/audit-log-service
+      dockerfile: Dockerfile
+    container_name: ems_audit_svc
+    restart: unless-stopped
+    ports:
+      - '3006:3006'
+    environment:
+      PORT: 3006
+      DATABASE_URL: postgresql://ems_user:ems_pass@postgres:5432/ems_db
+      ARMS_BASE_URL: ${ARMS_BASE_URL:-http://arms.pup.edu.ph/api}
+      ARMS_SERVICE_TOKEN: ${ARMS_SERVICE_TOKEN:-dev_service_token}
+      ARMS_DISPATCH_MAX_RETRIES: '3'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ─── Dashboard & Reporting Service (:3007) ──────────────────────────────────
+  dashboard-reporting-service:
+    build:
+      context: ./apps/dashboard-reporting-service
+      dockerfile: Dockerfile
+    container_name: ems_dashboard_svc
+    restart: unless-stopped
+    ports:
+      - '3007:3007'
+    environment:
+      PORT: 3007
+      DATABASE_URL: postgresql://ems_user:ems_pass@postgres:5432/ems_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

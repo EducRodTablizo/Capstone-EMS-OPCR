@@ -9,7 +9,7 @@ import {
   getTransactionApi, getTransactionHistoryApi,
   updateTransactionStatusApi, updateDocumentaryStatusApi,
   assignTransactionApi, getUsersApi,
-} from '@/api/mockApi'
+} from '@/api'
 import type { Transaction, TransactionStatusHistory, User, TransactionStatus, DocumentaryStatus, ActionType } from '@/types'
 import { TopBar } from '@/components/layout/TopBar'
 import { Button } from '@/components/ui/button'
