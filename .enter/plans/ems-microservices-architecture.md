@@ -1,68 +1,155 @@
 # EMS NestJS Microservices Architecture Plan
-## Capstone — Production-Grade Backend Migration
+## Capstone — Production-Grade Backend Migration (Revised)
 
 ---
 
 ## 1. Context
 
-The EMS is currently a React + Vite frontend with an **in-memory mock API** (`src/api/mockApi.ts`) standing in for a real backend. The database schema, migrations, triggers, and RLS policies are fully designed and documented in `database/`. This plan migrates the simulated logic into a real **NestJS monorepo backend** without breaking the existing frontend or database migrations.
+The EMS is a React + Vite frontend with an **in-memory mock API** (`src/api/mockApi.ts`) standing in for a real backend. The database schema, migrations, triggers, and RLS policies are fully designed in `database/`. This plan migrates the simulated logic into a real **NestJS monorepo backend** without breaking the existing frontend or database.
 
-**Decisions confirmed:**
-- Full working NestJS code (all 7 services)
-- Communication: Kafka (async events) + NestJS TCP transport (sync service-to-service) + REST (frontend → API Gateway)
-- Single shared PostgreSQL database — existing RLS policies enforced via `SET LOCAL ems.*` config vars
-- Frontend: `src/api/mockApi.ts` kept; new `src/api/realApi.ts` created; `src/api/index.ts` toggles between them
+**Architecture decisions (final):**
+- ✅ NestJS monorepo (`apps/` + `packages/`)
+- ✅ Single shared PostgreSQL — existing RLS, triggers, functions untouched
+- ✅ API Gateway as single REST entry point
+- ✅ Docker Compose for all services
+- ✅ HTTP REST for service-to-service communication (not NestJS TCP)
+- ✅ EMS does NOT own authentication — JWT is issued by ARMS, EMS only validates
+- ✅ Kafka added in Phase 4 only — after core HTTP services are verified
 
 ---
 
-## 2. Target Monorepo Structure
+## 2. Correction #1 — Remove EMS Login Ownership
+
+**Before (wrong):**
+```
+POST /api/auth/login  →  user-management-service
+```
+
+**After (correct):**
+```
+ARMS (external)  →  issues JWT
+React             →  receives JWT, stores in localStorage
+API Gateway       →  validates JWT signature on every request
+                  →  extracts claims (sub, role, office_id, office_code)
+                  →  passes user context to downstream services via headers
+```
+
+**Replacement functions in `src/api/realApi.ts`:**
+- `loginApi()` is **kept in `mockApi.ts` only** (dev convenience)
+- `realApi.ts` exposes: `validateTokenApi()` → `GET /api/auth/me` (returns current user from JWT claims)
+- All other API calls simply attach `Authorization: Bearer <token>` via `apiClient` interceptor (already configured in `src/api/client.ts`)
+
+**API Gateway auth module responsibilities:**
+- Verify JWT signature against ARMS public key (or HMAC secret in dev)
+- Reject 401 if expired or invalid
+- Attach `x-user-id`, `x-office-id`, `x-user-role` request headers for downstream services
+- `GET /api/auth/me` → return decoded JWT claims as `User` object (no DB call needed)
+
+---
+
+## 3. Correction #2 — Phased Kafka (Not Day 1)
+
+Kafka is added **only in Phase 4** after all HTTP services are working.
+
+**Phase 1–3:** Direct HTTP calls only. `dispatchToARMS()` stub remains a `console.debug()` line, exactly as it is in `mockApi.ts` today.
+
+**Phase 4 Kafka topics (deferred):**
+
+| Topic | Producer | Consumers |
+|---|---|---|
+| `ems.transaction.created` | service-transaction | audit-log |
+| `ems.transaction.assigned` | service-transaction | audit-log |
+| `ems.transaction.status_changed` | service-transaction | audit-log, time-tracking |
+| `ems.transaction.completed` | service-transaction | time-tracking, performance |
+| `ems.transaction.documentary_changed` | service-transaction | audit-log |
+| `ems.sla.computation_completed` | time-tracking | service-transaction, performance |
+| `ems.audit.log_created` | audit-log | (ARMS stub → real in Sprint 4) |
+| `ems.performance.metrics_updated` | performance | dashboard |
+
+---
+
+## 4. Correction #3 — HTTP REST Between Services (Not TCP)
+
+**Before (wrong):** NestJS TCP microservice transport (`@MessagePattern`, `ClientProxy`)
+
+**After (correct):** Plain HTTP REST between services
+
+```
+React (src/)
+    │ REST (JWT Bearer)
+    ↓
+api-gateway :3001
+    │ HTTP GET /users              → user-management-service :3002
+    │ HTTP GET/POST /transactions  → service-transaction-service :3003
+    │ HTTP GET /transactions/:id/history → audit-log-service :3006
+    │ HTTP GET /audit-log          → audit-log-service :3006
+    └ HTTP GET /dashboard/stats    → dashboard-reporting-service :3007
+```
+
+Each downstream service is a **standard NestJS HTTP app** (no `@nestjs/microservices` TCP). The API Gateway uses `HttpService` (axios wrapper) to proxy requests. This means:
+- All endpoints are debuggable with curl / Postman
+- Services are independently deployable and testable
+- Language-agnostic in the future (Java, Go, Python can replace any service)
+- Capstone defense: everyone understands `GET /transactions`
+
+---
+
+## 5. Target Monorepo Structure
 
 ```
 EMS_PROJECT/                        ← /workspace/thread (project root)
 ├── src/                            ← existing React app (UNCHANGED)
 │   └── api/
-│       ├── mockApi.ts              ← keep (dev only)
-│       ├── realApi.ts              ← NEW: real HTTP calls via apiClient
-│       └── index.ts                ← NEW: exports from mock or real
+│       ├── mockApi.ts              ← keep (dev convenience, unchanged)
+│       ├── realApi.ts              ← NEW: real HTTP via apiClient
+│       └── index.ts                ← NEW: toggle mock vs real
 ├── apps/
-│   ├── api-gateway/                port 3001 — single entry point
-│   ├── user-management-service/    port 3002 — EMS-001,002,003
-│   ├── service-transaction-service/ port 3003 — EMS-004,005,006,007
-│   ├── time-tracking-sla-service/  port 3004 — EMS-008,009,010,011,012
-│   ├── performance-monitoring-service/ port 3005 — EMS-016,017,018,019
-│   ├── audit-log-service/          port 3006 — EMS-015,024,025,026
-│   └── dashboard-reporting-service/ port 3007 — EMS-020,021,022,023
+│   ├── api-gateway/                port 3001
+│   ├── user-management-service/    port 3002
+│   ├── service-transaction-service/ port 3003
+│   ├── time-tracking-sla-service/  port 3004
+│   ├── performance-monitoring-service/ port 3005
+│   ├── audit-log-service/          port 3006
+│   └── dashboard-reporting-service/ port 3007
 ├── packages/
-│   ├── dto/                        shared CreateTransactionDto, UpdateStatusDto, etc.
-│   ├── kafka/                      Kafka producer/consumer base + event contracts
-│   └── types/                      shared TypeScript interfaces (mirrors src/types/index.ts)
+│   ├── dto/                        shared DTOs
+│   └── types/                      shared TypeScript interfaces
 ├── database/                       ← existing migrations (DO NOT TOUCH)
 ├── docker-compose.yml              NEW
-└── package.json                    UPDATE: pnpm workspaces root
+├── pnpm-workspace.yaml             NEW
+└── package.json                    UPDATE: workspaces root
 ```
+
+> **`packages/kafka/` is deferred to Phase 4** — not created in Phase 1–3.
 
 ---
 
-## 3. Service Ownership Matrix
+## 6. Service Ownership Matrix
 
 | Table | Owning Service | Read-Access Services |
 |---|---|---|
-| `offices` | user-management-service | all services (via API GW) |
+| `offices` | user-management-service | all |
 | `users` | user-management-service | service-transaction, audit-log |
 | `services` | service-transaction-service | dashboard, performance |
-| `transactions` | service-transaction-service | time-tracking, audit-log, dashboard, performance |
+| `transactions` | service-transaction-service | audit-log, dashboard, performance |
 | `transaction_status_history` | audit-log-service | performance, dashboard |
 | `pss_computation_queue` | time-tracking-sla-service | dashboard |
 
-**RLS enforcement**: Each service sets `SET LOCAL ems.current_office_id`, `ems.current_role`, `ems.acting_user_id` from JWT claims before every DB operation.
+**RLS enforcement:** Each service sets PostgreSQL session variables per request:
+```sql
+SET LOCAL ems.current_office_id = '<uuid>';
+SET LOCAL ems.current_role      = '<role>';
+SET LOCAL ems.acting_user_id    = '<uuid>';
+```
+These are extracted from `x-user-*` headers injected by the API Gateway.
 
 ---
 
-## 4. API Endpoint Mapping (Frontend → API GW → Service)
+## 7. API Endpoint Mapping
 
 | `mockApi.ts` Function | Method | API GW Route | Target Service |
 |---|---|---|---|
-| `loginApi` | POST | `/api/auth/login` | api-gateway (JWT validation only) |
+| `loginApi` (mock-only) | — | — | ARMS (external) |
 | `getUsersApi` | GET | `/api/users` | user-management-service |
 | `getServicesApi` | GET | `/api/services` | service-transaction-service |
 | `getTransactionsApi` | GET | `/api/transactions` | service-transaction-service |
@@ -74,315 +161,265 @@ EMS_PROJECT/                        ← /workspace/thread (project root)
 | `getTransactionHistoryApi` | GET | `/api/transactions/:id/history` | audit-log-service |
 | `getAuditLogApi` | GET | `/api/audit-log` | audit-log-service |
 | `getDashboardStatsApi` | GET | `/api/dashboard/stats` | dashboard-reporting-service |
+| *(new)* | GET | `/api/auth/me` | api-gateway (JWT decode only) |
 
 ---
 
-## 5. Kafka Event Contracts
+## 8. Phased Implementation Strategy
 
-All events live in `packages/kafka/src/events.ts`.
+### Phase 1 — Core HTTP (Implement First)
+**Goal:** React frontend → API Gateway → 3 services → PostgreSQL. All Sprint 3 features verified.
 
-| Event Topic | Producer | Consumers |
-|---|---|---|
-| `ems.transaction.created` | service-transaction | audit-log, time-tracking |
-| `ems.transaction.assigned` | service-transaction | audit-log |
-| `ems.transaction.status_changed` | service-transaction | audit-log, time-tracking |
-| `ems.transaction.completed` | service-transaction | audit-log, time-tracking, performance |
-| `ems.transaction.documentary_changed` | service-transaction | audit-log |
-| `ems.sla.computation_requested` | time-tracking | (PSS stub) |
-| `ems.sla.computation_completed` | time-tracking | service-transaction, performance |
-| `ems.audit.log_created` | audit-log | (ARMS stub) |
-| `ems.performance.metrics_updated` | performance-monitoring | dashboard |
+Services:
+- `api-gateway` — JWT validation, HTTP proxy, `/api/auth/me`
+- `user-management-service` — `GET /users`, `fn_sync_user()`
+- `service-transaction-service` — full transaction CRUD + service catalog
 
----
-
-## 6. Database Strategy
-
-- **Single PostgreSQL instance** — all services share one connection string
-- Each service sets `SET LOCAL` config vars per request for RLS:
-  ```sql
-  SET LOCAL ems.current_office_id = '<office_uuid>';
-  SET LOCAL ems.current_role = '<role>';
-  SET LOCAL ems.acting_user_id = '<user_uuid>';
-  ```
-- Reuse existing `fn_compute_processing_time()`, `fn_classify_sla()`, `fn_sync_user()`, `fn_get_office_stats()`
-- **No new migrations needed** — all schema already exists in `01–06` files
+Frontend changes:
+- `src/api/realApi.ts` — 12 functions using `apiClient`
+- `src/api/index.ts` — toggle via `window.__EMS_USE_REAL_API__`
+- Update all page imports from `@/api/mockApi` → `@/api`
 
 ---
 
-## 7. Communication Architecture
+### Phase 2 — Audit & SLA
+**Goal:** History endpoints live; SLA computation queue working.
 
-```
-React Frontend (src/)
-        |
-        | REST HTTP (JWT Bearer)
-        ↓
-  api-gateway :3001
-   (JWT guard, rate-limit, route proxy)
-        |
-        | NestJS TCP Transport (internal)
-        ├──→ user-management-service :3002
-        ├──→ service-transaction-service :3003 ──→ Kafka ──→ audit-log-service :3006
-        │                                              └──→ time-tracking-sla-service :3004
-        ├──→ time-tracking-sla-service :3004 (SLA queue)
-        ├──→ audit-log-service :3006
-        └──→ dashboard-reporting-service :3007 ←── performance-monitoring-service :3005
-```
+Services:
+- `audit-log-service` — `GET /transactions/:id/history`, `GET /audit-log`, writes `transaction_status_history`
+- `time-tracking-sla-service` — SLA computation queue, `fn_classify_sla()`, `pss_computation_queue` management
+
+service-transaction-service calls audit-log-service via HTTP after each mutation (replaces `dispatchToARMS()` stub).
 
 ---
 
-## 8. Files to Create
+### Phase 3 — Performance & Dashboard
+**Goal:** Dashboard stats and SLA review powered by real DB functions.
 
-### Root Level
-- `package.json` — UPDATE: add `workspaces`, remove scripts (moved to apps)
-- `pnpm-workspace.yaml` — NEW: `packages: ['apps/*', 'packages/*']`
-- `docker-compose.yml` — NEW: PostgreSQL, Kafka, Zookeeper, all 7 NestJS services
+Services:
+- `performance-monitoring-service` — `fn_get_sla_compliance_by_service()`, trend data
+- `dashboard-reporting-service` — `fn_get_office_stats()`, KPI aggregation
 
 ---
 
-### `packages/types/` — Shared TypeScript Interfaces
-- `packages/types/src/index.ts` — mirrors `src/types/index.ts` exactly (User, Transaction, Service, etc.)
+### Phase 4 — Kafka Integration
+**Goal:** Event-driven async flow for audit and SLA.
+
+- Add `packages/kafka/` with KafkaJS module and event contracts
+- service-transaction-service emits Kafka events instead of direct HTTP to audit-log
+- audit-log-service and time-tracking-sla-service become Kafka consumers
+- ARMS dispatch: real HTTP POST to ARMS `POST /audit/ingest`
+- docker-compose adds: `zookeeper`, `kafka`
+
+---
+
+## 9. Files to Create — Phase 1 (Priority)
+
+### Root Config
+- `pnpm-workspace.yaml`
+- `package.json` (root — workspaces only, no scripts)
+- `docker-compose.yml` — Phase 1: postgres + 3 services; Phase 4: add kafka + zookeeper
+
+### `packages/types/`
+- `packages/types/src/index.ts` — copy of `src/types/index.ts`
 - `packages/types/package.json`
 - `packages/types/tsconfig.json`
 
----
-
-### `packages/dto/` — Shared Data Transfer Objects
-- `packages/dto/src/auth.dto.ts` — `LoginDto`, `LoginResponseDto`
-- `packages/dto/src/user.dto.ts` — `CreateUserDto`, `SyncUserDto`
-- `packages/dto/src/transaction.dto.ts` — `CreateTransactionDto`, `UpdateTransactionStatusDto`, `UpdateDocumentaryStatusDto`, `AssignTransactionDto`
-- `packages/dto/src/dashboard.dto.ts` — `DashboardStatsDto`
-- `packages/dto/src/audit.dto.ts` — `AuditLogFilterDto`
+### `packages/dto/`
+- `packages/dto/src/transaction.dto.ts`
+- `packages/dto/src/user.dto.ts`
+- `packages/dto/src/auth.dto.ts`
+- `packages/dto/src/dashboard.dto.ts`
+- `packages/dto/src/audit.dto.ts`
 - `packages/dto/package.json`
 - `packages/dto/tsconfig.json`
 
----
-
-### `packages/kafka/` — Kafka Producers/Consumers + Event Contracts
-- `packages/kafka/src/events.ts` — all Kafka event interfaces
-- `packages/kafka/src/kafka.module.ts` — shared `KafkaModule` (configurable)
-- `packages/kafka/src/kafka.service.ts` — `produce()` wrapper
-- `packages/kafka/package.json`
-- `packages/kafka/tsconfig.json`
-
----
-
 ### `apps/api-gateway/`
-- `apps/api-gateway/src/main.ts`
-- `apps/api-gateway/src/app.module.ts`
-- `apps/api-gateway/src/auth/jwt.strategy.ts` — validates ARMS-issued JWTs
-- `apps/api-gateway/src/auth/jwt.guard.ts`
-- `apps/api-gateway/src/auth/auth.module.ts`
-- `apps/api-gateway/src/proxy/gateway.controller.ts` — proxies every route to appropriate service via TCP
-- `apps/api-gateway/src/proxy/gateway.module.ts`
-- `apps/api-gateway/src/common/rate-limit.guard.ts`
-- `apps/api-gateway/package.json`
-- `apps/api-gateway/tsconfig.json`
-- `apps/api-gateway/.env.example`
-
----
+- `src/main.ts`
+- `src/app.module.ts`
+- `src/auth/jwt.strategy.ts` — validates ARMS JWT, extracts claims
+- `src/auth/jwt.guard.ts`
+- `src/auth/auth.controller.ts` — `GET /api/auth/me`
+- `src/auth/auth.module.ts`
+- `src/proxy/proxy.module.ts`
+- `src/proxy/users.proxy.controller.ts` — proxies `/api/users` → user-svc
+- `src/proxy/transactions.proxy.controller.ts` — proxies all `/api/transactions/*`
+- `src/proxy/audit.proxy.controller.ts` — proxies `/api/audit-log` + history
+- `src/proxy/dashboard.proxy.controller.ts` — proxies `/api/dashboard/stats`
+- `src/common/rls-headers.interceptor.ts` — injects `x-user-*` headers
+- `package.json`, `tsconfig.json`, `.env.example`
 
 ### `apps/user-management-service/`
-- `apps/user-management-service/src/main.ts` — hybrid (TCP + HTTP)
-- `apps/user-management-service/src/app.module.ts`
-- `apps/user-management-service/src/users/users.module.ts`
-- `apps/user-management-service/src/users/users.controller.ts` — TCP message patterns
-- `apps/user-management-service/src/users/users.service.ts` — `getUsers()`, `syncUser()`, `getUserById()`
-- `apps/user-management-service/src/users/users.repository.ts` — raw SQL via `pg` pool + RLS context
-- `apps/user-management-service/src/offices/offices.module.ts`
-- `apps/user-management-service/src/offices/offices.service.ts`
-- `apps/user-management-service/src/database/database.module.ts` — shared PG pool
-- `apps/user-management-service/package.json`
-- `apps/user-management-service/tsconfig.json`
-- `apps/user-management-service/.env.example`
-
----
+- `src/main.ts`
+- `src/app.module.ts`
+- `src/database/database.module.ts` — PG pool, `setRlsContext()` helper
+- `src/users/users.module.ts`
+- `src/users/users.controller.ts` — `GET /users?officeId=`, `GET /users/:id`
+- `src/users/users.service.ts` — `getUsers()`, `getUserById()`, `syncUserFromJwt()`
+- `src/users/users.repository.ts` — SQL queries
+- `src/offices/offices.controller.ts` — `GET /offices`
+- `src/offices/offices.service.ts`
+- `package.json`, `tsconfig.json`, `.env.example`
 
 ### `apps/service-transaction-service/`
-- `apps/service-transaction-service/src/main.ts`
-- `apps/service-transaction-service/src/app.module.ts`
-- `apps/service-transaction-service/src/transactions/transactions.module.ts`
-- `apps/service-transaction-service/src/transactions/transactions.controller.ts` — TCP message patterns
-- `apps/service-transaction-service/src/transactions/transactions.service.ts`
-  - Ports: `createTransaction()`, `assignTransaction()`, `updateStatus()`, `updateDocumentary()`, `getTransaction()`, `listTransactions()`
-  - Each mutating method emits Kafka event after DB write
-- `apps/service-transaction-service/src/transactions/transactions.repository.ts` — SQL queries, sets RLS vars
-- `apps/service-transaction-service/src/services/services.module.ts`
-- `apps/service-transaction-service/src/services/services.service.ts` — `getServicesByOffice()`
-- `apps/service-transaction-service/package.json`
-- `apps/service-transaction-service/tsconfig.json`
-- `apps/service-transaction-service/.env.example`
+- `src/main.ts`
+- `src/app.module.ts`
+- `src/database/database.module.ts`
+- `src/services/services.module.ts`
+- `src/services/services.controller.ts` — `GET /services?officeId=`
+- `src/services/services.service.ts`
+- `src/services/services.repository.ts`
+- `src/transactions/transactions.module.ts`
+- `src/transactions/transactions.controller.ts` — all 6 transaction endpoints
+- `src/transactions/transactions.service.ts` — ports all logic from `mockApi.ts`
+- `src/transactions/transactions.repository.ts` — raw SQL + RLS context
+- `src/transactions/audit-dispatch.service.ts` — HTTP call to audit-log-service (replaces `dispatchToARMS()`)
+- `package.json`, `tsconfig.json`, `.env.example`
+
+### Frontend
+- `src/api/realApi.ts`
+- `src/api/index.ts`
+- Update `src/auth/AuthContext.tsx` imports
+- Update all 6 pages/components that import from `@/api/mockApi`
 
 ---
 
-### `apps/time-tracking-sla-service/`
-- `apps/time-tracking-sla-service/src/main.ts`
-- `apps/time-tracking-sla-service/src/app.module.ts`
-- `apps/time-tracking-sla-service/src/sla/sla.module.ts`
-- `apps/time-tracking-sla-service/src/sla/sla.controller.ts` — TCP + Kafka consumer
-- `apps/time-tracking-sla-service/src/sla/sla.service.ts`
-  - Consumes `ems.transaction.completed` → triggers `fn_classify_sla()`
-  - Manages `pss_computation_queue`: queued → submitted → received | failed
-  - Retry logic with exponential backoff
-  - Emits `ems.sla.computation_completed`
-- `apps/time-tracking-sla-service/src/sla/sla.repository.ts`
-- `apps/time-tracking-sla-service/src/pss/pss.client.ts` — PSS HTTP stub (Sprint 4)
-- `apps/time-tracking-sla-service/package.json`
-- `apps/time-tracking-sla-service/tsconfig.json`
-
----
-
-### `apps/performance-monitoring-service/`
-- `apps/performance-monitoring-service/src/main.ts`
-- `apps/performance-monitoring-service/src/app.module.ts`
-- `apps/performance-monitoring-service/src/performance/performance.module.ts`
-- `apps/performance-monitoring-service/src/performance/performance.controller.ts` — TCP
-- `apps/performance-monitoring-service/src/performance/performance.service.ts`
-  - Consumes `ems.transaction.completed` and `ems.sla.computation_completed`
-  - Calls `fn_get_sla_compliance_by_service()` and `fn_get_office_stats()`
-  - Emits `ems.performance.metrics_updated`
-- `apps/performance-monitoring-service/src/performance/performance.repository.ts`
-- `apps/performance-monitoring-service/package.json`
-- `apps/performance-monitoring-service/tsconfig.json`
-
----
+## 10. Files to Create — Phase 2
 
 ### `apps/audit-log-service/`
-- `apps/audit-log-service/src/main.ts`
-- `apps/audit-log-service/src/app.module.ts`
-- `apps/audit-log-service/src/audit/audit.module.ts`
-- `apps/audit-log-service/src/audit/audit.controller.ts` — TCP + Kafka consumer
-- `apps/audit-log-service/src/audit/audit.service.ts`
-  - Consumes all `ems.transaction.*` Kafka events → inserts `transaction_status_history` rows
-  - `getHistory(transactionId)` → returns audit timeline
-  - `getAuditLog(officeId, filters)` → filtered log view
-  - `dispatchToARMS()` → stub HTTP POST to ARMS (Sprint 4)
-- `apps/audit-log-service/src/audit/audit.repository.ts`
-- `apps/audit-log-service/package.json`
-- `apps/audit-log-service/tsconfig.json`
+- `src/main.ts`, `src/app.module.ts`
+- `src/database/database.module.ts`
+- `src/audit/audit.module.ts`
+- `src/audit/audit.controller.ts` — `GET /history/:transactionId`, `GET /audit-log`
+- `src/audit/audit.service.ts` — writes history, reads filtered log
+- `src/audit/audit.repository.ts`
+- `src/audit/arms-dispatch.service.ts` — stub POST to ARMS
+- `package.json`, `tsconfig.json`, `.env.example`
+
+### `apps/time-tracking-sla-service/`
+- `src/main.ts`, `src/app.module.ts`
+- `src/database/database.module.ts`
+- `src/sla/sla.module.ts`
+- `src/sla/sla.controller.ts` — `POST /sla/compute`, `GET /sla/queue`
+- `src/sla/sla.service.ts` — calls `fn_classify_sla()`, manages `pss_computation_queue`
+- `src/sla/sla.repository.ts`
+- `src/pss/pss.client.ts` — PSS HTTP stub (Sprint 4)
+- `package.json`, `tsconfig.json`, `.env.example`
 
 ---
+
+## 11. Files to Create — Phase 3
+
+### `apps/performance-monitoring-service/`
+- `src/main.ts`, `src/app.module.ts`
+- `src/database/database.module.ts`
+- `src/performance/performance.module.ts`
+- `src/performance/performance.controller.ts` — `GET /performance/by-service`, `GET /performance/trend`
+- `src/performance/performance.service.ts` — calls `fn_get_sla_compliance_by_service()`
+- `src/performance/performance.repository.ts`
+- `package.json`, `tsconfig.json`, `.env.example`
 
 ### `apps/dashboard-reporting-service/`
-- `apps/dashboard-reporting-service/src/main.ts`
-- `apps/dashboard-reporting-service/src/app.module.ts`
-- `apps/dashboard-reporting-service/src/dashboard/dashboard.module.ts`
-- `apps/dashboard-reporting-service/src/dashboard/dashboard.controller.ts` — TCP
-- `apps/dashboard-reporting-service/src/dashboard/dashboard.service.ts`
-  - Calls `fn_get_office_stats()` and `fn_get_sla_compliance_by_service()`
-  - Consumes `ems.performance.metrics_updated`
-- `apps/dashboard-reporting-service/src/dashboard/dashboard.repository.ts`
-- `apps/dashboard-reporting-service/package.json`
-- `apps/dashboard-reporting-service/tsconfig.json`
+- `src/main.ts`, `src/app.module.ts`
+- `src/database/database.module.ts`
+- `src/dashboard/dashboard.module.ts`
+- `src/dashboard/dashboard.controller.ts` — `GET /dashboard/stats`
+- `src/dashboard/dashboard.service.ts` — calls `fn_get_office_stats()`
+- `src/dashboard/dashboard.repository.ts`
+- `package.json`, `tsconfig.json`, `.env.example`
 
 ---
 
-### Frontend Changes (`src/api/`)
-- `src/api/realApi.ts` — NEW: identical function signatures as `mockApi.ts`, using `apiClient` for real HTTP
-- `src/api/index.ts` — NEW: toggle export (mock vs real based on `window.__EMS_USE_REAL_API__`)
-- Update `src/auth/AuthContext.tsx` — import from `@/api/index` instead of `@/api/mockApi`
-- Update all pages to import from `@/api` instead of `@/api/mockApi`
+## 12. Files to Create — Phase 4 (Kafka)
+
+### `packages/kafka/`
+- `src/events.ts` — all Kafka event interfaces
+- `src/kafka.module.ts` — shared `KafkaModule` with `forRoot()`
+- `src/kafka.service.ts` — `produce(topic, payload)` wrapper
+- `package.json`, `tsconfig.json`
+
+### Update existing services
+- service-transaction-service: swap `AuditDispatchService` HTTP calls → Kafka `produce()`
+- audit-log-service: add `@EventPattern()` Kafka consumers
+- time-tracking-sla-service: add `@EventPattern()` for `transaction.completed`
+- docker-compose: add `zookeeper` + `kafka` services
 
 ---
 
-## 9. Docker Compose Services
-
-```yaml
-services:
-  postgres:       image: postgres:15, port 5432
-  zookeeper:      image: confluentinc/cp-zookeeper:7.4.0
-  kafka:          image: confluentinc/cp-kafka:7.4.0, port 9092
-  api-gateway:    build: ./apps/api-gateway, port 3001
-  user-svc:       build: ./apps/user-management-service, port 3002
-  transaction-svc: build: ./apps/service-transaction-service, port 3003
-  time-tracking-svc: build: ./apps/time-tracking-sla-service, port 3004
-  performance-svc: build: ./apps/performance-monitoring-service, port 3005
-  audit-svc:      build: ./apps/audit-log-service, port 3006
-  dashboard-svc:  build: ./apps/dashboard-reporting-service, port 3007
-```
-
----
-
-## 10. Implementation Order
-
-1. **`packages/types`** — copy types from `src/types/index.ts`
-2. **`packages/dto`** — extract DTOs from `src/types/index.ts`
-3. **`packages/kafka`** — event contracts, KafkaModule
-4. **Root** — `pnpm-workspace.yaml`, update `package.json`, `docker-compose.yml`
-5. **`apps/api-gateway`** — JWT guard, TCP proxy controller
-6. **`apps/user-management-service`** — users + offices, PG pool, RLS context helper
-7. **`apps/service-transaction-service`** — full transaction CRUD + Kafka produces
-8. **`apps/audit-log-service`** — Kafka consumers + history/audit-log queries
-9. **`apps/time-tracking-sla-service`** — Kafka consumer + SLA computation queue
-10. **`apps/performance-monitoring-service`** — metrics aggregation
-11. **`apps/dashboard-reporting-service`** — stats + reporting
-12. **Frontend** — `src/api/realApi.ts` + `src/api/index.ts` + update imports
-
----
-
-## 11. Key Reuse Points
+## 13. Key Existing Code Reused
 
 | Existing File | Reused In |
 |---|---|
-| `database/01_schema.sql` | Reference only (no recreation) |
-| `database/02_functions.sql` | Called by: time-tracking (`fn_classify_sla`), dashboard (`fn_get_office_stats`, `fn_get_sla_compliance_by_service`), user-management (`fn_sync_user`) |
-| `database/03_triggers.sql` | Auto-invoked by DB on INSERT/UPDATE — no NestJS code needed |
+| `database/01–06_*.sql` | Reference only — no recreation |
+| `fn_classify_sla()` | time-tracking-sla-service → called via `PERFORM fn_classify_sla($1)` |
+| `fn_get_office_stats()` | dashboard-reporting-service → `SELECT * FROM fn_get_office_stats($1)` |
+| `fn_get_sla_compliance_by_service()` | performance-monitoring-service |
+| `fn_sync_user()` | user-management-service → `SELECT fn_sync_user($1,$2,$3,$4,$5)` |
+| `src/api/client.ts` | Reused in `realApi.ts` — already configured for `localhost:3001` |
 | `src/types/index.ts` | Copied to `packages/types/src/index.ts` |
-| `src/api/client.ts` | Reused in `src/api/realApi.ts` (already configured for localhost:3001) |
-| `src/utils/slaUtils.ts` | Mirrored logic in `time-tracking-sla-service/sla.service.ts` |
+| `src/utils/slaUtils.ts` | Logic mirrored in time-tracking service |
 
 ---
 
-## 12. Verification Checklist
-
-- [ ] `docker-compose up` starts all 7 services and Kafka
-- [ ] `POST /api/auth/login` with `admin@ems.ph` / `admin123` returns JWT
-- [ ] `GET /api/transactions` with valid JWT returns office-scoped list
-- [ ] `POST /api/transactions` creates a transaction, emits `ems.transaction.created` Kafka event
-- [ ] audit-log-service consumes `ems.transaction.created` and writes `transaction_status_history`
-- [ ] `PATCH /api/transactions/:id/status` with `completed` triggers time-tracking SLA computation
-- [ ] Completed transaction returns `is_locked: true` on subsequent GET
-- [ ] `GET /api/audit-log` returns filtered history for the office
-- [ ] `GET /api/dashboard/stats` returns `DashboardStats` with correct counts
-- [ ] Frontend toggle (`window.__EMS_USE_REAL_API__ = true`) switches from mockApi to realApi
-
----
-
-## 13. NestJS Packages Required (per service)
+## 14. NestJS Packages Required (all services)
 
 ```json
 {
   "@nestjs/common": "^10",
   "@nestjs/core": "^10",
-  "@nestjs/microservices": "^10",
   "@nestjs/platform-express": "^10",
+  "@nestjs/axios": "^3",
   "@nestjs/jwt": "^10",
   "@nestjs/passport": "^10",
+  "@nestjs/throttler": "^5",
   "passport": "^0.6",
   "passport-jwt": "^4",
-  "kafkajs": "^2",
   "pg": "^8",
   "reflect-metadata": "^0.1",
   "rxjs": "^7",
   "class-validator": "^0.14",
-  "class-transformer": "^0.5",
-  "@nestjs/throttler": "^5"
+  "class-transformer": "^0.5"
 }
 ```
+Phase 4 only: `kafkajs: ^2`
 
 ---
 
-## 14. Total Files to Create/Modify
+## 15. Capstone Adviser Scorecard (Post-Corrections)
 
-| Category | Count |
+| Area | Verdict |
 |---|---|
-| Root config files | 3 |
-| packages/* | 11 |
-| apps/api-gateway | 9 |
-| apps/user-management-service | 10 |
-| apps/service-transaction-service | 10 |
-| apps/time-tracking-sla-service | 8 |
-| apps/performance-monitoring-service | 7 |
-| apps/audit-log-service | 8 |
-| apps/dashboard-reporting-service | 7 |
-| Frontend refactor | 4 |
-| **Total** | **~77 files** |
+| Service Boundaries | ✅ Excellent |
+| Docker Compose | ✅ Excellent |
+| Shared PostgreSQL + RLS | ✅ Excellent |
+| API Gateway | ✅ Correct |
+| ARMS JWT (EMS does not own auth) | ✅ Corrected |
+| Service-to-service HTTP REST | ✅ Corrected |
+| Kafka deferred to Phase 4 | ✅ Corrected |
+| Phased implementation | ✅ Risk-controlled |
+
+---
+
+## 16. Verification Checklist
+
+### Phase 1
+- [ ] `docker-compose up` starts postgres + 3 NestJS services
+- [ ] `GET /api/auth/me` with valid JWT returns `User` object
+- [ ] `GET /api/transactions` with office-scoped JWT returns correct list
+- [ ] `POST /api/transactions` creates row in DB, returns `Transaction`
+- [ ] `PATCH /api/transactions/:id/status` → `completed` sets `is_locked = true`
+- [ ] React frontend with `window.__EMS_USE_REAL_API__ = true` loads correctly
+
+### Phase 2
+- [ ] `GET /api/transactions/:id/history` returns audit entries from DB
+- [ ] `GET /api/audit-log` returns filtered, paginated history
+- [ ] `PATCH status → completed` triggers SLA computation via time-tracking-svc
+- [ ] `pss_computation_queue` row created with `status = 'queued'`
+
+### Phase 3
+- [ ] `GET /api/dashboard/stats` returns `DashboardStats` from `fn_get_office_stats()`
+- [ ] SLA review page loads service breakdown from performance-monitoring-svc
+
+### Phase 4
+- [ ] `transaction.created` Kafka message consumed by audit-log-service
+- [ ] audit-log-service writes `transaction_status_history` from Kafka event
