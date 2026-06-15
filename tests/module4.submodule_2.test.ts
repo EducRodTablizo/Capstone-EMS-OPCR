@@ -1,0 +1,42 @@
+
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await page.goto('http://localhost:5175/login');
+  await page.getByRole('button', { name: 'Subsystem Admin · Administrative Office admin@ems.ph / admin123 Use →' }).click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('link', { name: 'Transactions' }).click();
+  await page.getByRole('button', { name: 'JM John Michael Garcia' }).click();
+  await page.getByRole('button', { name: 'Logout' }).click();
+  await page.getByRole('button', { name: 'Confirm' }).click();
+  await page.getByRole('button', { name: 'Staff · Administrative Office' }).click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('link', { name: 'Transactions' }).click();
+  await page.getByRole('button', { name: 'KY Kenneth Yulip staff' }).click();
+  await page.getByRole('button', { name: 'Logout' }).click();
+  await page.getByRole('button', { name: 'Confirm' }).click();
+  await page.getByRole('button', { name: 'OPCR Evaluator · Cross-Office' }).click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('link', { name: 'Transactions' }).click();
+  await page.getByRole('button', { name: 'PC Pau Carillio opcr evaluator' }).click();
+  await page.getByRole('button', { name: 'Logout' }).click();
+  await page.getByRole('button', { name: 'Confirm' }).click();
+  await page.getByRole('button', { name: 'Subsystem Admin · OSAS' }).click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('link', { name: 'Transactions' }).click();
+  await page.getByRole('button', { name: 'MR Mikhail Reveche subsystem' }).click();
+  await page.getByRole('button', { name: 'Logout' }).click();
+  await page.getByRole('button', { name: 'Confirm' }).click();
+  await page.getByRole('button', { name: 'Subsystem Admin · Academic' }).click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('link', { name: 'Transactions' }).click();
+  await page.getByRole('button', { name: 'DA Dr. Ana Reyes subsystem' }).click();
+  await page.getByRole('button', { name: 'Logout' }).click();
+  await page.getByRole('button', { name: 'Confirm' }).click();
+  await page.getByRole('button', { name: 'Staff · Academic Office' }).click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('link', { name: 'Transactions' }).click();
+  await page.getByRole('button', { name: 'BS Ben Santos staff' }).click();
+  await page.getByRole('button', { name: 'Logout' }).click();
+  await page.getByRole('button', { name: 'Confirm' }).click();
+});

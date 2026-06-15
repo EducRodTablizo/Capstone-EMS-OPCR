@@ -1,0 +1,30 @@
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await page.goto('http://localhost:5175/login');
+  await page.getByRole('button', { name: 'Staff · Administrative Office' }).click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('link', { name: 'Transactions' }).click();
+  await page.getByRole('row', { name: 'Facility Reservation Request' }).getByRole('link').click();
+  await page.getByRole('link', { name: 'Back to Transaction' }).click();
+  await expect(page.locator('div').filter({ hasText: 'Service' }).nth(4)).toBeVisible();
+  await page.getByRole('link', { name: 'Evaluation Period' }).click();
+  await page.getByRole('link', { name: 'Return to Dashboard' }).click();
+  await page.getByRole('button', { name: 'KY Kenneth Yulip staff' }).click();
+  await page.getByRole('button', { name: 'Logout' }).click();
+  await page.getByRole('button', { name: 'Confirm' }).click();
+  await page.getByRole('button', { name: 'Staff · Administrative Office' }).click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('link', { name: 'Transactions' }).click();
+  await expect(page.locator('div').filter({ hasText: 'Service' }).nth(4)).toBeVisible();
+  await page.getByRole('button', { name: 'KY Kenneth Yulip staff' }).click();
+  await page.getByRole('button', { name: 'Logout' }).click();
+  await page.getByRole('button', { name: 'Confirm' }).click();
+  await page.getByRole('button', { name: 'OPCR Evaluator · Cross-Office' }).click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page.getByText('DashboardOverview — Administrative OfficeTotal Transactions8In Progress22')).toBeVisible();
+  await page.getByRole('link', { name: 'Transactions' }).click();
+  await expect(page.locator('div').filter({ hasText: 'Service' }).nth(4)).toBeVisible();
+  await page.getByRole('link', { name: 'View' }).first().click();
+  await expect(page.getByText('Current Status:Pending')).toBeVisible();
+});
