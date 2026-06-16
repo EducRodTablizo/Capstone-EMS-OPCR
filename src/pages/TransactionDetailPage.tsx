@@ -19,11 +19,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { useModals } from '@/components/shared/ModalContext'
 import { StatusBadge, SLABadge, DocumentaryBadge } from '@/components/shared/StatusBadge'
 import { formatDateTime, formatDuration } from '@/utils/timeUtils'
 import { slaVariance } from '@/utils/slaUtils'
-import { toast } from '@/hooks/useToast'
 import { cn } from '@/utils/cn'
 
 const STATUS_FLOW: TransactionStatus[] = ['pending', 'in_progress', 'completed']
@@ -61,15 +60,7 @@ export function TransactionDetailPage() {
   const [docRemarks, setDocRemarks] = useState('')
   const [updating, setUpdating] = useState(false)
 
-  // Confirmation Modals State
-  const [showStatusConfirm, setShowStatusConfirm] = useState(false)
-  const [pendingStatus, setPendingStatus] = useState<TransactionStatus | null>(null)
-
-  const [showDocConfirm, setShowDocConfirm] = useState(false)
-  const [pendingDocStatus, setPendingDocStatus] = useState<DocumentaryStatus | null>(null)
-
-  const [showAssignConfirm, setShowAssignConfirm] = useState(false)
-  const [pendingAssignee, setPendingAssignee] = useState<User | null>(null)
+  const { confirm, showResult } = useModals()
 
   // EMS-025: locked = completed (is_locked set atomically on completion)
   const canModify = user?.role !== 'opcr_evaluator' && !txn?.is_locked
@@ -89,60 +80,76 @@ export function TransactionDetailPage() {
 
   // Trigger Status Update Confirm
   function triggerStatusUpdate(newStatus: TransactionStatus) {
-    setPendingStatus(newStatus)
-    setShowStatusConfirm(true)
-  }
-
-  async function handleStatusUpdate() {
-    if (!txn || !user || !pendingStatus) return
-    setShowStatusConfirm(false)
-    setUpdating(true)
-    try {
-      const updated = await updateTransactionStatusApi(
-        txn.id,
-        { status: pendingStatus, remarks: statusRemarks || undefined },
-        user
-      )
-      setTxn(updated)
-      const h = await getTransactionHistoryApi(txn.id)
-      setHistory(h)
-      setStatusRemarks('')
-      toast({ title: `Status → ${pendingStatus.replace('_', ' ')}`, variant: 'success' })
-    } catch (err) {
-      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed', variant: 'destructive' })
-    } finally {
-      setUpdating(false)
-      setPendingStatus(null)
-    }
+    confirm({
+      title: 'Confirm Status Update',
+      message: `Are you sure you want to mark this transaction as ${newStatus.replace('_', ' ')}?`,
+      confirmText: 'Confirm',
+      onConfirm: async () => {
+        if (!txn || !user) return
+        setUpdating(true)
+        try {
+          const updated = await updateTransactionStatusApi(
+            txn.id,
+            { status: newStatus, remarks: statusRemarks || undefined },
+            user
+          )
+          setTxn(updated)
+          const h = await getTransactionHistoryApi(txn.id)
+          setHistory(h)
+          setStatusRemarks('')
+          showResult({
+            type: 'success',
+            title: 'Success!',
+            message: `Status updated to ${newStatus.replace('_', ' ')} successfully.`,
+          })
+        } catch (err) {
+          showResult({
+            type: 'error',
+            title: 'Error',
+            message: err instanceof Error ? err.message : 'Failed to update status',
+          })
+        } finally {
+          setUpdating(false)
+        }
+      }
+    })
   }
 
   // Trigger Documentary Status Update Confirm
   function triggerDocStatusUpdate(newStatus: DocumentaryStatus) {
-    setPendingDocStatus(newStatus)
-    setShowDocConfirm(true)
-  }
-
-  async function handleDocStatusUpdate() {
-    if (!txn || !user || !pendingDocStatus) return
-    setShowDocConfirm(false)
-    setUpdating(true)
-    try {
-      const updated = await updateDocumentaryStatusApi(
-        txn.id,
-        { documentary_status: pendingDocStatus, remarks: docRemarks || undefined },
-        user
-      )
-      setTxn(updated)
-      const h = await getTransactionHistoryApi(txn.id)
-      setHistory(h)
-      setDocRemarks('')
-      toast({ title: `Documentary status updated`, variant: 'success' })
-    } catch (err) {
-      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed', variant: 'destructive' })
-    } finally {
-      setUpdating(false)
-      setPendingDocStatus(null)
-    }
+    confirm({
+      title: 'Confirm Documentary Status Update',
+      message: `Are you sure you want to change the documentary status to ${newStatus}?`,
+      confirmText: 'Confirm',
+      onConfirm: async () => {
+        if (!txn || !user) return
+        setUpdating(true)
+        try {
+          const updated = await updateDocumentaryStatusApi(
+            txn.id,
+            { documentary_status: newStatus, remarks: docRemarks || undefined },
+            user
+          )
+          setTxn(updated)
+          const h = await getTransactionHistoryApi(txn.id)
+          setHistory(h)
+          setDocRemarks('')
+          showResult({
+            type: 'success',
+            title: 'Success!',
+            message: 'Documentary status updated successfully.',
+          })
+        } catch (err) {
+          showResult({
+            type: 'error',
+            title: 'Error',
+            message: err instanceof Error ? err.message : 'Failed to update documentary status',
+          })
+        } finally {
+          setUpdating(false)
+        }
+      }
+    })
   }
 
   // Reassignment handlers
@@ -151,31 +158,35 @@ export function TransactionDetailPage() {
     if (userId === txn.assigned_to) return
     const assignee = officeUsers.find((u) => u.id === userId)
     if (!assignee) return
-    setPendingAssignee(assignee)
-    setShowAssignConfirm(true)
-  }
-
-  async function confirmReassign() {
-    if (!txn || !user || !pendingAssignee) return
-    setShowAssignConfirm(false)
-    setUpdating(true)
-    try {
-      const previousAssignee = txn.assigned_to_name ?? 'Unassigned'
-      const updated = await assignTransactionApi(txn.id, pendingAssignee.id, user)
-      setTxn(updated)
-      const h = await getTransactionHistoryApi(txn.id)
-      setHistory(h)
-      toast({
-        title: 'Reassignment complete',
-        description: `${previousAssignee} → ${pendingAssignee.name}`,
-        variant: 'success',
-      })
-    } catch (err) {
-      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed', variant: 'destructive' })
-    } finally {
-      setUpdating(false)
-      setPendingAssignee(null)
-    }
+    const previousAssignee = txn.assigned_to_name ?? 'Unassigned'
+    confirm({
+      title: 'Confirm Reassignment',
+      message: `Are you sure you want to reassign this transaction from ${previousAssignee} to ${assignee.name}?`,
+      confirmText: 'Confirm',
+      onConfirm: async () => {
+        if (!txn || !user) return
+        setUpdating(true)
+        try {
+          const updated = await assignTransactionApi(txn.id, assignee.id, user)
+          setTxn(updated)
+          const h = await getTransactionHistoryApi(txn.id)
+          setHistory(h)
+          showResult({
+            type: 'success',
+            title: 'Success!',
+            message: `Reassignment complete: ${previousAssignee} → ${assignee.name}`,
+          })
+        } catch (err) {
+          showResult({
+            type: 'error',
+            title: 'Error',
+            message: err instanceof Error ? err.message : 'Failed to reassign',
+          })
+        } finally {
+          setUpdating(false)
+        }
+      }
+    })
   }
 
   function getHistoryLabel(item: TransactionStatusHistory) {
@@ -557,72 +568,6 @@ export function TransactionDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* Confirmation Dialog for Status Change */}
-      <Dialog open={showStatusConfirm} onOpenChange={setShowStatusConfirm}>
-        <DialogContent className="max-w-md modal-container">
-          <DialogHeader>
-            <DialogTitle className="modal-title text-[#580000]">Confirm Status Update</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 mt-2">
-              Are you sure you want to mark this transaction as <strong>{pendingStatus?.replace('_', ' ')}</strong>?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="pt-4 flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setShowStatusConfirm(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleStatusUpdate} className="bg-[#580000] text-white hover:bg-[#7a0c0c]">
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmation Dialog for Documentary Status Change */}
-      <Dialog open={showDocConfirm} onOpenChange={setShowDocConfirm}>
-        <DialogContent className="max-w-md modal-container">
-          <DialogHeader>
-            <DialogTitle className="modal-title text-[#580000]">Confirm Documentary Status Update</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 mt-2">
-              Are you sure you want to change the documentary status to <strong>{pendingDocStatus}</strong>?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="pt-4 flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setShowDocConfirm(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleDocStatusUpdate} className="bg-[#580000] text-white hover:bg-[#7a0c0c]">
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmation Dialog for Reassignment */}
-      <Dialog open={showAssignConfirm} onOpenChange={setShowAssignConfirm}>
-        <DialogContent className="max-w-md modal-container">
-          <DialogHeader>
-            <DialogTitle className="modal-title text-[#580000]">Confirm Reassignment</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 mt-2">
-              Are you sure you want to reassign this transaction from <strong>{txn.assigned_to_name ?? 'Unassigned'}</strong> to <strong>{pendingAssignee?.name}</strong>?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="pt-4 flex gap-3 justify-end">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowAssignConfirm(false)
-                setPendingAssignee(null)
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={confirmReassign} className="bg-[#580000] text-white hover:bg-[#7a0c0c]">
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

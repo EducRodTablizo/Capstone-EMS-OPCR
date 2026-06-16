@@ -13,23 +13,75 @@ import { StatusBadge, SLABadge, DocumentaryBadge } from '@/components/shared/Sta
 import { formatDateTime, formatDuration } from '@/utils/timeUtils'
 import { cn } from '@/utils/cn'
 
+const T = {
+  blue: '#3B82F6',
+  slate400: '#94A3B8',
+  green: '#22C55E',
+  red: '#E24B4A',
+  maroon: '#580000',
+}
+
+function InteractiveCard({
+  className,
+  style,
+  accentColor,
+  children,
+}: {
+  className?: string
+  style?: React.CSSProperties
+  accentColor: string
+  children: React.ReactNode
+}) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <Card
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className={cn("transition-all duration-300 ease-in-out", className)}
+      style={{
+        ...style,
+        borderTop: `4px solid ${accentColor}`,
+        boxShadow: hovered 
+          ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' 
+          : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        transform: hovered ? 'scale(1.02)' : 'scale(1)',
+      }}
+    >
+      {children}
+    </Card>
+  )
+}
+
 function StatCard({
-  title, value, sub, icon: Icon, variant = 'default',
+  title, value, sub, icon: Icon, variant = 'default', accentColor,
 }: {
   title: string
   value: string | number
   sub?: string
   icon: ElementType
   variant?: 'default' | 'danger' | 'success' | 'warning'
+  accentColor: string
 }) {
+  const [hovered, setHovered] = useState(false)
   const colors = {
     default: 'text-primary bg-primary/10',
     danger: 'text-destructive bg-destructive/10',
     success: 'text-success bg-success/10',
-    warning: 'text-warning bg-warning/10',
+    warning: 'text-muted-foreground bg-muted',
   }
   return (
-    <Card>
+    <Card
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="transition-all duration-300 ease-in-out"
+      style={{
+        borderTop: `4px solid ${accentColor}`,
+        boxShadow: hovered 
+          ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' 
+          : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        transform: hovered ? 'scale(1.02)' : 'scale(1)',
+      }}
+    >
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div>
@@ -91,12 +143,14 @@ export function DashboardPage() {
             title="Total Transactions"
             value={stats?.total_transactions ?? 0}
             icon={ClipboardList}
+            accentColor={T.maroon}
           />
           <StatCard
             title="In Progress"
             value={stats?.in_progress ?? 0}
             sub={`${stats?.pending ?? 0} pending`}
             icon={Activity}
+            accentColor={T.blue}
             variant="warning"
           />
           <StatCard
@@ -104,6 +158,7 @@ export function DashboardPage() {
             value={`${stats?.compliance_rate ?? 0}%`}
             sub={`${stats?.compliant ?? 0} compliant`}
             icon={TrendingUp}
+            accentColor={T.green}
             variant="success"
           />
           <StatCard
@@ -111,13 +166,14 @@ export function DashboardPage() {
             value={stats?.sla_breach_count ?? 0}
             sub="needs attention"
             icon={AlertTriangle}
+            accentColor={T.red}
             variant="danger"
           />
         </div>
 
         {/* SLA Summary Row */}
         <div className="grid grid-cols-3 gap-4">
-          <Card className="border-success/20">
+          <InteractiveCard className="border-success/20" accentColor={T.green}>
             <CardContent className="pt-5 pb-5">
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="h-8 w-8 text-success" />
@@ -127,8 +183,8 @@ export function DashboardPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
-          <Card className="border-destructive/20">
+          </InteractiveCard>
+          <InteractiveCard className="border-destructive/20" accentColor={T.red}>
             <CardContent className="pt-5 pb-5">
               <div className="flex items-center gap-3">
                 <XCircle className="h-8 w-8 text-destructive" />
@@ -138,8 +194,8 @@ export function DashboardPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
-          <Card className="border-border">
+          </InteractiveCard>
+          <InteractiveCard className="border-border" accentColor={T.slate400}>
             <CardContent className="pt-5 pb-5">
               <div className="flex items-center gap-3">
                 <Clock className="h-8 w-8 text-muted-foreground" />
@@ -149,14 +205,14 @@ export function DashboardPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </InteractiveCard>
         </div>
 
         {/* SLA Breaches — EMS-012 */}
         {breaches.length > 0 && (
-          <Card className="border-destructive/30">
+          <InteractiveCard className="border-destructive/30" accentColor={T.red}>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2 text-destructive">
+              <CardTitle className="text-lg flex items-center gap-2 text-destructive">
                 <AlertTriangle className="h-4 w-4" />
                 SLA Breached Transactions ({breaches.length})
               </CardTitle>
@@ -185,14 +241,19 @@ export function DashboardPage() {
                 ))}
               </div>
             </CardContent>
-          </Card>
+          </InteractiveCard>
         )}
 
         {/* Recent Transactions */}
-        <Card>
+        <Card
+          style={{
+            borderTop: `4px solid ${T.maroon}`,
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }}
+        >
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm">Recent Transactions</CardTitle>
-            <Link to="/transactions" className="text-xs text-primary hover:underline flex items-center gap-1">
+            <CardTitle className="text-lg">Recent Transactions</CardTitle>
+            <Link to="/transactions" className="text-lg text-primary hover:underline flex items-center gap-1">
               View all <ArrowRight className="h-3 w-3" />
             </Link>
           </CardHeader>

@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { RoleBadge } from '@/components/shared/StatusBadge'
 import { toast } from '@/hooks/useToast'
 import { cn } from '@/utils/cn'
+import { useModals } from '@/components/shared/ModalContext'
 
 // Helper to split full name into parts
 function parseName(fullName: string) {
@@ -69,11 +70,7 @@ export function UsersPage() {
   const [role, setRole] = useState<UserRole>('staff')
   const [isActive, setIsActive] = useState(true)
 
-  // Confirm Overlay States
-  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const { confirm, showResult } = useModals()
 
   // Load initial list from API
   useEffect(() => {
@@ -113,12 +110,18 @@ export function UsersPage() {
       toast({ title: 'Validation Error', description: 'Please fill in all required fields.', variant: 'destructive' })
       return
     }
-    setShowSubmitConfirm(true)
+    confirm({
+      title: 'Confirm Action',
+      message: `Are you sure you want to ${dialogMode === 'create' ? 'create' : 'update'} this user account?`,
+      confirmText: 'Confirm',
+      onConfirm: () => {
+        executeSubmit()
+      }
+    })
   }
 
   // Actual mutation operations (frontend-only in memory)
   const executeSubmit = () => {
-    setShowSubmitConfirm(false)
     const middleNamePart = middleName.trim() ? ` ${middleName.trim()}` : ''
     const fullName = `${firstName.trim()}${middleNamePart} ${surname.trim()}`
 
@@ -135,7 +138,12 @@ export function UsersPage() {
         created_at: new Date().toISOString(),
       }
       setUsers([newUser, ...users])
-      toast({ title: 'User Account Created', description: `${fullName} added successfully.`, variant: 'success' })
+      setDialogOpen(false)
+      showResult({
+        type: 'success',
+        title: 'User Account Created',
+        message: `${fullName} added successfully.`,
+      })
     } else {
       setUsers(
         users.map((u) =>
@@ -144,31 +152,42 @@ export function UsersPage() {
             : u
         )
       )
-      toast({ title: 'User Account Updated', description: `${fullName} modified successfully.`, variant: 'success' })
+      setDialogOpen(false)
+      showResult({
+        type: 'success',
+        title: 'User Account Updated',
+        message: `${fullName} modified successfully.`,
+      })
     }
-    setDialogOpen(false)
   }
 
   const triggerDelete = (id: string) => {
-    setPendingDeleteId(id)
-    setShowDeleteConfirm(true)
-  }
-
-  const executeDelete = () => {
-    if (!pendingDeleteId) return
-    const target = users.find((u) => u.id === pendingDeleteId)
-    setUsers(users.filter((u) => u.id !== pendingDeleteId))
-    setShowDeleteConfirm(false)
-    setPendingDeleteId(null)
-    toast({
-      title: 'User Account Deleted',
-      description: `${target?.name || 'User'} has been removed.`,
-      variant: 'success',
+    const target = users.find((u) => u.id === id)
+    if (!target) return
+    confirm({
+      title: 'Confirm Deletion',
+      message: 'Are you sure you want to delete this user account? This action is permanent and cannot be undone.',
+      confirmText: 'Confirm',
+      onConfirm: () => {
+        setUsers(users.filter((u) => u.id !== id))
+        showResult({
+          type: 'success',
+          title: 'User Account Deleted',
+          message: `${target.name} has been removed.`,
+        })
+      }
     })
   }
 
   const handleCancel = () => {
-    setShowCancelConfirm(true)
+    confirm({
+      title: 'Discard Draft changes',
+      message: 'Are you sure? You have unsaved changes. Closing this modal will discard all modifications.',
+      confirmText: 'Confirm',
+      onConfirm: () => {
+        setDialogOpen(false)
+      }
+    })
   }
 
   // Sorting columns
@@ -629,72 +648,6 @@ export function UsersPage() {
               </div>
             </DialogFooter>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmation Dialog: Save/Submit */}
-      <Dialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
-        <DialogContent className="max-w-md modal-container">
-          <DialogHeader>
-            <DialogTitle className="modal-title text-[#580000]">Confirm Action</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 mt-2">
-              Are you sure you want to {dialogMode === 'create' ? 'create' : 'update'} this user account?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="pt-4 flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setShowSubmitConfirm(false)}>
-              Cancel
-            </Button>
-            <Button onClick={executeSubmit} className="bg-[#580000] text-white hover:bg-[#7a0c0c]">
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmation Dialog: Cancel/Close Form */}
-      <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
-        <DialogContent className="max-w-md modal-container">
-          <DialogHeader>
-            <DialogTitle className="modal-title text-[#580000]">Discard Draft changes</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 mt-2">
-              Are you sure? You have unsaved changes. Closing this modal will discard all modifications.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="pt-4 flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setShowCancelConfirm(false)}>
-              Cancel
-            </Button>
-            <Button
-              className="bg-[#E24B4A] text-white hover:bg-[#c93a3a]"
-              onClick={() => {
-                setShowCancelConfirm(false)
-                setDialogOpen(false)
-              }}
-            >
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmation Dialog: Delete User */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="max-w-md modal-container">
-          <DialogHeader>
-            <DialogTitle className="modal-title text-[#E24B4A]">Confirm Deletion</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 mt-2">
-              Are you sure you want to delete this user account? This action is permanent and cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="pt-4 flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
-              Cancel
-            </Button>
-            <Button onClick={executeDelete} className="bg-[#E24B4A] text-white hover:bg-[#c93a3a]">
-              Confirm
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

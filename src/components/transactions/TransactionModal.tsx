@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Controller } from 'react-hook-form'
@@ -12,10 +11,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { toast } from '@/hooks/useToast'
 import { ServiceDynamicFields } from './ServiceDynamicFields'
 import { TransactionFormProvider, useTransactionForm } from './TransactionFormProvider'
 import type { TransactionFormValues } from './transactionTypes'
+import { useModals } from '@/components/shared/ModalContext'
 
 interface TransactionModalProps {
   open: boolean
@@ -39,11 +38,7 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
   const errors = formState.errors as Record<string, { message?: string }>
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-
-  // Confirmation dialog states
-  const [showConfirmSubmit, setShowConfirmSubmit] = useState(false)
-  const [showConfirmClose, setShowConfirmClose] = useState(false)
-  const [pendingValues, setPendingValues] = useState<TransactionFormValues | null>(null)
+  const { confirm, showResult } = useModals()
 
   const selectedServiceName = selectedService?.name || ''
   const selectedServiceCategory = selectedService?.category || 'Service'
@@ -55,66 +50,85 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
     },
     onSuccess: (transaction: Transaction) => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
-      onCreated(transaction)
-      onOpenChange(false)
-      toast({ title: 'Transaction created', description: `Time-in recorded`, variant: 'success' })
-      navigate(`/transactions/${transaction.id}`)
+      showResult({
+        type: 'success',
+        title: 'Success!',
+        message: 'Transaction created successfully. Time-in recorded.',
+        buttonText: 'Got it!',
+        onConfirm: () => {
+          onCreated(transaction)
+          onOpenChange(false)
+          navigate(`/transactions/${transaction.id}`)
+        }
+      })
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Could not create transaction',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive',
+      showResult({
+        type: 'error',
+        title: 'Error!',
+        message: error.message || 'Could not create transaction',
+        buttonText: 'Dismiss'
       })
     },
   })
 
   const onSubmit = (values: TransactionFormValues) => {
-    setPendingValues(values)
-    setShowConfirmSubmit(true)
-  }
+    confirm({
+      title: 'Confirm Submission',
+      message: 'Are you sure you want to submit this transaction? This will record the time-in and initialize OPCR service targets.',
+      confirmText: 'Confirm',
+      onConfirm: () => {
+        const documentationStatus = selectedServiceConfig?.documentation
+          ? Object.values(values.service_specific_data.documentaryCompliance || {}).every(Boolean)
+            ? 'complete'
+            : 'incomplete'
+          : 'complete'
 
-  const handleConfirmSubmit = () => {
-    if (!pendingValues || !currentUser) return
-    setShowConfirmSubmit(false)
+        const middlePart = values.client_middle_name?.trim() ? ` ${values.client_middle_name.trim()}` : ''
+        const fullClientName = `${values.client_first_name.trim()}${middlePart} ${values.client_surname.trim()}`
 
-    const values = pendingValues
-    const documentationStatus = selectedServiceConfig?.documentation
-      ? Object.values(values.service_specific_data.documentaryCompliance || {}).every(Boolean)
-        ? 'complete'
-        : 'incomplete'
-      : 'complete'
+        const payload: CreateTransactionDto = {
+          service_id: values.service_id,
+          assigned_to:
+            values.assigned_to && values.assigned_to !== 'UNASSIGNED' ? values.assigned_to : undefined,
+          client_name: fullClientName,
+          client_type: values.client_type,
+          student_number: values.student_number?.trim() || undefined,
+          course: values.course?.trim() || undefined,
+          year_level: values.year_level?.trim() || undefined,
+          contact_number: values.contact_number.trim(),
+          organization: values.organization?.trim() || undefined,
+          remarks: values.remarks?.trim() || undefined,
+          documentation_status: documentationStatus,
+          service_specific_data: values.service_specific_data,
+        }
 
-    // Standardize client name: First Name + Middle Name + Surname
-    const middlePart = values.client_middle_name?.trim() ? ` ${values.client_middle_name.trim()}` : ''
-    const fullClientName = `${values.client_first_name.trim()}${middlePart} ${values.client_surname.trim()}`
-
-    const payload: CreateTransactionDto = {
-      service_id: values.service_id,
-      assigned_to:
-        values.assigned_to && values.assigned_to !== 'UNASSIGNED' ? values.assigned_to : undefined,
-      client_name: fullClientName,
-      client_type: values.client_type,
-      student_number: values.student_number?.trim() || undefined,
-      course: values.course?.trim() || undefined,
-      year_level: values.year_level?.trim() || undefined,
-      contact_number: values.contact_number.trim(),
-      organization: values.organization?.trim() || undefined,
-      remarks: values.remarks?.trim() || undefined,
-      documentation_status: documentationStatus,
-      service_specific_data: values.service_specific_data,
-    }
-
-    mutation.mutate(payload)
+        mutation.mutate(payload)
+      }
+    })
   }
 
   const handleCancelClick = () => {
-    setShowConfirmClose(true)
+    confirm({
+      title: 'Discard Changes',
+      message: 'Are you sure? You have unsaved changes. All draft data will be lost.',
+      confirmText: 'Confirm',
+      onConfirm: () => {
+        onOpenChange(false)
+      }
+    })
   }
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      setShowConfirmClose(true)
+      confirm({
+        title: 'Discard Changes',
+        message: 'Are you sure? You have unsaved changes. All draft data will be lost.',
+        confirmText: 'Confirm',
+        onConfirm: () => {
+          onOpenChange(false)
+        }
+      })
     } else {
       onOpenChange(true)
     }
@@ -129,7 +143,7 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
           <div className="flex h-full flex-col overflow-hidden">
             <DialogHeader>
               <div className="mb-3 flex flex-col gap-2">
-                <DialogTitle className="modal-title">New Service Transaction</DialogTitle>
+                <DialogTitle className="text-2xl font-bold tracking-tight">New Service Transaction</DialogTitle>
                 <DialogDescription>
                   Record a new transaction and auto-generate time-in, SLA, and audit timeline.
                 </DialogDescription>
@@ -146,8 +160,7 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
                   <CardContent className="space-y-4 pt-6">
                     <div className="flex items-center justify-between gap-4">
                       <div>
-                        <p className="text-sm font-semibold text-[#580000]">Service Information</p>
-                        <p className="text-xs text-muted-foreground">EMS-004 / EMS-005 metadata</p>
+                        <p className="text-lg font-semibold text-[#580000]">Service Information</p>
                       </div>
                       <Badge variant="outline" className="border-[#C8960C] text-[#C8960C] font-semibold">Time-In auto-recorded</Badge>
                     </div>
@@ -270,7 +283,7 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
                 <Card>
                   <CardContent className="space-y-4 pt-6">
                     <div>
-                      <p className="text-sm font-semibold text-[#580000]">Client Information</p>
+                      <p className="text-lg font-semibold text-[#580000]">Client Information</p>
                       <p className="text-xs text-muted-foreground">Additional client details for the transaction.</p>
                     </div>
 
@@ -418,7 +431,7 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
                 <Card>
                   <CardContent className="space-y-4 pt-6">
                     <div>
-                      <p className="text-sm font-semibold text-[#580000]">Service-Specific Fields (Optional)</p>
+                      <p className="text-lg font-semibold text-[#580000]">Service-Specific Fields (Optional)</p>
                       <p className="text-xs text-muted-foreground">Fields change depending on the selected service.</p>
                     </div>
                     <ServiceDynamicFields />
@@ -438,52 +451,6 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
               </DialogFooter>
             </form>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmation Dialog for Submission */}
-      <Dialog open={showConfirmSubmit} onOpenChange={setShowConfirmSubmit}>
-        <DialogContent className="max-w-md modal-container">
-          <DialogHeader>
-            <DialogTitle className="modal-title text-[#580000]">Confirm Submission</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 mt-2">
-              Are you sure you want to submit this transaction? This will record the time-in and initialize OPCR service targets.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="pt-4 flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setShowConfirmSubmit(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmSubmit} className="bg-[#580000] text-white hover:bg-[#7a0c0c]">
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmation Dialog for Cancel/Close */}
-      <Dialog open={showConfirmClose} onOpenChange={setShowConfirmClose}>
-        <DialogContent className="max-w-md modal-container">
-          <DialogHeader>
-            <DialogTitle className="modal-title text-[#580000]">Discard Changes</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 mt-2">
-              Are you sure? You have unsaved changes. All draft data will be lost.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="pt-4 flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setShowConfirmClose(false)}>
-              Cancel
-            </Button>
-            <Button
-              className="bg-[#E24B4A] text-white hover:bg-[#c93a3a]"
-              onClick={() => {
-                setShowConfirmClose(false)
-                onOpenChange(false)
-              }}
-            >
-              Confirm
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

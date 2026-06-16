@@ -13,6 +13,8 @@ import { SLAReviewPage } from './pages/SLAReviewPage'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
 import { AuditLogPage } from './pages/AuditLogPage'
 
+import { ModalProvider } from './components/shared/ModalContext'
+
 const queryClient = new QueryClient()
 
 class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error?: Error }> {
@@ -61,56 +63,58 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AppErrorBoundary>
         <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Public */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          <ModalProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-              {/* Protected app */}
-              <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<DashboardPage />} />
+                {/* Protected app */}
+                <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={<DashboardPage />} />
 
-                {/* EMS-001, 002, 003 — Subsystem Admin + OPCR Evaluator */}
-                <Route
-                  path="users"
-                  element={
-                    <ProtectedRoute allowedRoles={['subsystem_admin', 'opcr_evaluator']}>
-                      <UsersPage />
-                    </ProtectedRoute>
-                  }
-                />
+                  {/* EMS-001, 002, 003 — Subsystem Admin + OPCR Evaluator */}
+                  <Route
+                    path="users"
+                    element={
+                      <ProtectedRoute allowedRoles={['subsystem_admin', 'opcr_evaluator']}>
+                        <UsersPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                {/* EMS-004 to 007 — all roles (OPCR read-only) */}
-                <Route path="transactions" element={<TransactionsPage />} />
-                <Route path="transactions/:id" element={<TransactionDetailPage />} />
+                  {/* EMS-004 to 007 — all roles (OPCR read-only) */}
+                  <Route path="transactions" element={<TransactionsPage />} />
+                  <Route path="transactions/:id" element={<TransactionDetailPage />} />
 
-                {/* EMS-008 to 012 — Subsystem Admin + OPCR Evaluator */}
-                <Route
-                  path="sla-review"
-                  element={
-                    <ProtectedRoute allowedRoles={['subsystem_admin', 'opcr_evaluator']}>
-                      <SLAReviewPage />
-                    </ProtectedRoute>
-                  }
-                />
+                  {/* EMS-008 to 012 — Subsystem Admin + OPCR Evaluator */}
+                  <Route
+                    path="sla-review"
+                    element={
+                      <ProtectedRoute allowedRoles={['subsystem_admin', 'opcr_evaluator']}>
+                        <SLAReviewPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                {/* EMS-026 — Audit Log — Subsystem Admin + OPCR Evaluator */}
-                <Route
-                  path="audit-log"
-                  element={
-                    <ProtectedRoute allowedRoles={['subsystem_admin', 'opcr_evaluator']}>
-                      <AuditLogPage />
-                    </ProtectedRoute>
-                  }
-                />
-              </Route>
+                  {/* EMS-026 — Audit Log — Subsystem Admin + OPCR Evaluator */}
+                  <Route
+                    path="audit-log"
+                    element={
+                      <ProtectedRoute allowedRoles={['subsystem_admin', 'opcr_evaluator']}>
+                        <AuditLogPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Route>
 
-              {/* Catch-all */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </BrowserRouter>
+                {/* Catch-all */}
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </ModalProvider>
         </AuthProvider>
       </AppErrorBoundary>
     </QueryClientProvider>

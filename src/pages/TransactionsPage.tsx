@@ -80,35 +80,37 @@ export function TransactionsPage() {
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-full sm:w-[350px]">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" />
-            <input
-              type="text"
-              placeholder="Search transactions..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-1 focus:ring-[#580000] placeholder:text-muted-foreground/60 transition-all h-14 md:h-12"
-            />
+        <div className="flex flex-wrap items-center justify-between gap-3 w-full">
+          <div className="flex flex-wrap items-center gap-3 flex-1">
+            <div className="relative w-full sm:w-[350px]">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" />
+              <input
+                type="text"
+                placeholder="Search transactions..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-1 focus:ring-[#580000] placeholder:text-muted-foreground/60 transition-all h-14 md:h-12"
+              />
+            </div>
+
+            <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
+              <SelectTrigger className="w-40 h-14 md:h-12 bg-white">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <SelectValue placeholder="Status" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
-            <SelectTrigger className="w-40 h-14 md:h-12 bg-white">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
-                <SelectValue placeholder="Status" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-
           {!isReadOnly && (
-            <Button onClick={() => setCreateOpen(true)} className="bg-[#580000] text-white hover:bg-[#7a0c0c] h-14 md:h-12 px-5 font-semibold">
+            <Button onClick={() => setCreateOpen(true)} className="bg-[#580000] text-white hover:bg-[#7a0c0c] h-14 md:h-12 px-5 font-semibold shrink-0">
               <Plus className="h-4 w-4 mr-1.5" />
               New Transaction
             </Button>
@@ -116,7 +118,7 @@ export function TransactionsPage() {
         </div>
 
         {/* Counts */}
-        <p className="text-xs text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           Showing {filtered.length} of {transactions.length} transactions
           {isReadOnly && ' · Read-only (OPCR Evaluator)'}
         </p>
@@ -133,14 +135,14 @@ export function TransactionsPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border bg-muted/50">
-                      <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Service</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Client</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Time In</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Assigned To</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Status</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Documents</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">SLA</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Duration</th>
+                      <th className="text-left px-4 py-3 text-base font-medium text-muted-foreground">Service</th>
+                      <th className="text-left px-4 py-3 text-base font-medium text-muted-foreground">Client</th>
+                      <th className="text-left px-4 py-3 text-base font-medium text-muted-foreground">Time In</th>
+                      <th className="text-left px-4 py-3 text-base font-medium text-muted-foreground">Assigned To</th>
+                      <th className="text-left px-4 py-3 text-base font-medium text-muted-foreground">Status</th>
+                      <th className="text-left px-4 py-3 text-base font-medium text-muted-foreground">Documents</th>
+                      <th className="text-left px-4 py-3 text-base font-medium text-muted-foreground">SLA</th>
+                      <th className="text-left px-4 py-3 text-base font-medium text-muted-foreground">Duration</th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>

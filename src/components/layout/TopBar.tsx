@@ -5,8 +5,7 @@ import { useAuth } from '@/auth/AuthContext'
 import { useSidebar } from './AppLayout'
 import { cn } from '@/utils/cn'
 import { toast } from '@/hooks/useToast'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { useModals } from '@/components/shared/ModalContext'
 
 interface BreadcrumbItem {
   label: string
@@ -19,11 +18,11 @@ export function TopBar() {
   const { isCollapsed, setCollapsed, isMobileOpen, setMobileOpen } = useSidebar()
   const location = useLocation()
   const navigate = useNavigate()
+  const { confirm } = useModals()
 
   // Dropdown visibility states
   const [profileOpen, setProfileOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const profileRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
@@ -141,18 +140,6 @@ export function TopBar() {
 
       {/* Right side: Date Badge, Notifications & User Profile */}
       <div className="flex items-center gap-4">
-
-        {/* Active Evaluation Period Badge */}
-
-        <div className="hidden md:block">
-
-          <span className="date-header font-bold">
-            Jun 9, 2026 – Jun 10, 2026
-
-          </span>
-
-        </div>
-
         {/* Notification Bell */}
         <div className="relative" ref={notifRef}>
           <button
@@ -210,12 +197,6 @@ export function TopBar() {
           {/* Profile Dropdown Menu */}
           {profileOpen && (
             <div className="absolute right-0 mt-2 w-56 bg-card rounded-xl border border-border shadow-xl py-2 z-50 overflow-hidden">
-              {/* Dropdown Header */}
-              <div className="px-4 py-2 bg-[#FCEBEB]/30 border-b border-border/80">
-                <p className="text-xs font-bold text-[#580000] truncate">{user?.name}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
-              </div>
-
               {/* Menu items */}
               <div className="py-1">
                 <button
@@ -228,7 +209,12 @@ export function TopBar() {
                 <button
                   onClick={() => {
                     setProfileOpen(false)
-                    setShowLogoutConfirm(true)
+                    confirm({
+                      title: 'Confirm Logout',
+                      message: 'Are you sure you want to log out of the OPCR System?',
+                      confirmText: 'Confirm',
+                      onConfirm: handleLogout,
+                    })
                   }}
                   className="flex w-full items-center gap-2 px-4 py-2 text-xs text-[#E24B4A] hover:bg-[#FCEBEB] transition-colors font-medium border-t border-border/50"
                 >
@@ -240,26 +226,6 @@ export function TopBar() {
           )}
         </div>
       </div>
-
-      {/* Confirmation Dialog for Logout */}
-      <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
-        <DialogContent className="max-w-md modal-container">
-          <DialogHeader>
-            <DialogTitle className="modal-title text-[#580000]">Confirm Logout</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 mt-2">
-              Are you sure you want to log out of the OPCR System?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="pt-4 flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setShowLogoutConfirm(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleLogout} className="bg-[#E24B4A] text-white hover:bg-[#c93a3a]">
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </header>
   )
 }
