@@ -186,12 +186,12 @@ id, transaction_id, old_status, new_status, changed_by, changed_at, remarks
 ---
 
 ## Verification Checklist
-- [ ] Login with Staff token → can only see own office data
-- [ ] Login with Subsystem Admin → sees all transactions, SLA flags
-- [ ] Login with OPCR Evaluator → read-only access, no create/edit buttons
-- [ ] Create transaction → time_in auto-populated, status = Pending
-- [ ] Set status → In Progress → Completed → time_out auto-set
-- [ ] Set documentary_status = Incomplete → processing time paused
-- [ ] SLA badge shows Compliant / Non-Compliant after completion
-- [ ] Dashboard highlights red for is_sla_breached = true
-- [ ] Cross-office action attempt → blocked with error toast
+- [/] Login with Staff token → can only see own office data
+- [/] Login with Subsystem Admin → sees all transactions, SLA flags
+- [/] Login with OPCR Evaluator → read-only access, no create/edit buttons
+- [/] Create transaction → time_in auto-populated, status = Pending
+- [/] Set status → In Progress → Completed → time_out auto-set
+- [/] Set documentary_status = Incomplete → processing time paused
+- [/] SLA badge shows Compliant / Non-Compliant after completion
+- [/] Dashboard highlights red for is_sla_breached = true
+- [/] Cross-office action attempt → blocked with error toast
