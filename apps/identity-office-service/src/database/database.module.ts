@@ -51,3 +51,16 @@ export async function setRlsContext(
   await client.query(`SET LOCAL ems.current_role = $1`, [role])
   await client.query(`SET LOCAL ems.acting_user_id = $1`, [userId])
 }
+
+useFactory: () => {
+  console.log('DATABASE_URL =', process.env.DATABASE_URL)
+
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 10,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 3_000,
+  })
+
+  return pool
+}
