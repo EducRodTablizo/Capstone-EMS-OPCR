@@ -16,7 +16,7 @@ import { elapsedSeconds } from '@/utils/timeUtils'
 import { computeSlaStatus, isSlaBreached } from '@/utils/slaUtils'
 
 // ─── In-memory store ─────────────────────────────────────────────────────────
-
+console.log('MOCK API MODE ACTIVE')
 const _users = [...MOCK_USERS]
 let _transactions: Transaction[] = [...MOCK_TRANSACTIONS]
 const _history: TransactionStatusHistory[] = [...MOCK_HISTORY]

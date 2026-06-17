@@ -9,15 +9,17 @@
  * All functions have identical signatures to mockApi.ts for drop-in replacement.
  */
 
+
+
 import type {
   User, Service, Transaction, TransactionStatusHistory,
   CreateTransactionDto, UpdateTransactionStatusDto, UpdateDocumentaryStatusDto,
   DashboardStats, LoginResponse, LoginDto,
 } from '@/types'
-import { getToken, clearToken } from '@/utils/jwt'
+import { getToken, removeToken } from '@/utils/jwt'
 
 const BASE = 'http://localhost:3001/api'
-
+console.log('REAL API MODE ACTIVE')
 // ─── HTTP Client ─────────────────────────────────────────────────────────────
 
 async function apiRequest<T>(
@@ -35,7 +37,7 @@ async function apiRequest<T>(
   })
 
   if (response.status === 401) {
-    clearToken()
+    removeToken()
     throw new Error('Session expired. Please log in again.')
   }
 
