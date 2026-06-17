@@ -1,15 +1,15 @@
 /**
  * API Router — switches between mock and real API.
  *
- * How to enable real API (in browser console or before page load):
- *   window.__EMS_USE_REAL_API__ = true
- *   localStorage.setItem('ems_use_real_api', 'true')
+ * Dev mode (Vite dev server, import.meta.env.DEV = true):
+ *   Always uses realApi.ts → hits API Gateway at http://localhost:3001/api
+ *   No toggle needed — hybrid mode is automatic.
  *
- * How to revert to mock:
- *   window.__EMS_USE_REAL_API__ = false
- *   localStorage.removeItem('ems_use_real_api')
- *
- * Default: mock API (so the app works without a backend running).
+ * Production build (import.meta.env.DEV = false):
+ *   Uses realApi.ts by default.
+ *   Can override via browser console for debugging:
+ *     window.__EMS_USE_REAL_API__ = false  → revert to mock
+ *     localStorage.setItem('ems_use_real_api', 'false')
  */
 
 import * as mockApi from './mockApi'
@@ -22,22 +22,25 @@ declare global {
 }
 
 function isRealApiEnabled(): boolean {
-  // Check runtime toggle first
-  if (typeof window !== 'undefined' && window.__EMS_USE_REAL_API__ === true) {
-    return true
+  // Dev mode: always use real API (hybrid mode)
+  if (import.meta.env.DEV) return true
+
+  // Production: check runtime toggle (for debugging)
+  if (typeof window !== 'undefined' && window.__EMS_USE_REAL_API__ === false) {
+    return false
   }
-  // Then check persisted preference
   if (typeof localStorage !== 'undefined') {
-    return localStorage.getItem('ems_use_real_api') === 'true'
+    const stored = localStorage.getItem('ems_use_real_api')
+    if (stored === 'false') return false
   }
-  return false
+  return true // default to real API in production too
 }
 
 function api<K extends keyof typeof mockApi>(fnName: K): typeof mockApi[K] {
   return (isRealApiEnabled() ? realApi : mockApi)[fnName] as typeof mockApi[K]
 }
 
-// ─── Re-exports — same interface as mockApi ───────────────────────────────────
+// ─── Re-exports — identical signatures to mockApi ─────────────────────────────
 
 export const loginApi = (...args: Parameters<typeof mockApi.loginApi>) =>
   api('loginApi')(...args)

@@ -1,15 +1,8 @@
 /**
  * Real API client — hits the NestJS API Gateway (http://localhost:3001/api).
- *
- * Toggle between mock and real API via browser console:
- *   window.__EMS_USE_REAL_API__ = true   // switch to real API
- *   window.__EMS_USE_REAL_API__ = false  // revert to mock
- *   localStorage.setItem('ems_use_real_api', 'true') // persist across reloads
- *
+ * Used automatically in dev mode (import.meta.env.DEV).
  * All functions have identical signatures to mockApi.ts for drop-in replacement.
  */
-
-
 
 import type {
   User, Service, Transaction, TransactionStatusHistory,
@@ -19,7 +12,6 @@ import type {
 import { getToken, removeToken } from '@/utils/jwt'
 
 const BASE = 'http://localhost:3001/api'
-console.log('REAL API MODE ACTIVE')
 // ─── HTTP Client ─────────────────────────────────────────────────────────────
 
 async function apiRequest<T>(
@@ -52,19 +44,15 @@ async function apiRequest<T>(
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 /**
- * loginApi — EMS does NOT own authentication.
- * In production: user logs in to ARMS → ARMS issues JWT → frontend stores it.
- * Here we call GET /auth/me to validate the stored token and return user data.
- *
- * For local dev: the stored token from mockApi.loginApi() is reused.
- * For production: redirect to ARMS login if no token.
+ * loginApi — Dev mode: calls GET /api/auth/me (API Gateway injects dev user).
+ * Production: ARMS issues JWT → frontend stores it → GET /api/auth/me validates it.
+ * EMS does NOT issue JWTs. Login is owned by ARMS.
  */
 export async function loginApi(_dto: LoginDto): Promise<LoginResponse> {
-  // In production this should redirect to ARMS login portal.
-  // For demo/dev: fall back to mockApi which generates a mock token.
-  throw new Error(
-    'EMS does not handle login. Use ARMS login portal or run in mock mode.',
-  )
+  // In dev mode, the DevAuthInner in AuthContext handles user injection automatically.
+  // This path is only called via the mock login form — return the dev user from API Gateway.
+  const user = await apiRequest<User>('/auth/me')
+  return { access_token: 'dev-bypass-token', user }
 }
 
 export async function getMeApi(): Promise<User> {
