@@ -19,6 +19,7 @@
     "noFallthroughCasesInSwitch": false,
     "paths": {
       "@ems/types": ["../../packages/types/src/index.ts"]
+      
     }
   }
 }

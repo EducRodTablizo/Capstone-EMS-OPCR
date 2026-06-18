@@ -9,7 +9,7 @@ import type {
   CreateTransactionDto, UpdateTransactionStatusDto, UpdateDocumentaryStatusDto,
   DashboardStats, LoginResponse, LoginDto,
 } from '@/types'
-import { getToken, removeToken } from '@/utils/jwt'
+import { getToken, clearToken } from '@/utils/jwt'
 
 const BASE = 'http://localhost:3001/api'
 // ─── HTTP Client ─────────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ async function apiRequest<T>(
   })
 
   if (response.status === 401) {
-    removeToken()
+    clearToken()
     throw new Error('Session expired. Please log in again.')
   }
 
