@@ -13,20 +13,26 @@ export const apiClient = axios.create({
   timeout: 10000,
 })
 
-// Attach JWT on every request
+// Attach JWT & Active Role on every request
 apiClient.interceptors.request.use((config) => {
   const token = getToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
+
+  // Check localStorage for any overridden active role
+  const activeRole = localStorage.getItem('active_role')
+  if (activeRole) {
+    config.headers['x-user-role'] = activeRole
+  }
   return config
 })
 
-// Handle 401 → logout
+// Handle 401 → clear token but do not redirect (login-free mode)
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       removeToken()
-      window.location.href = '/login'
+      console.warn('Received 401 Unauthorized from API. In login-free mode, bypassing redirect.')
     }
     return Promise.reject(error)
   },

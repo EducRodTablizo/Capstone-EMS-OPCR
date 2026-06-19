@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Search, Filter, Plus, ArrowUpDown, Edit, Trash2, ShieldAlert, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
-import { getUsersApi } from '@/api/mockApi'
+import { getUsersApi } from '@/api'
 import type { User, UserRole } from '@/types'
 import { TopBar } from '@/components/layout/TopBar'
 import { RoleBadge } from '@/components/shared/StatusBadge'

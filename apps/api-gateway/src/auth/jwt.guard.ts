@@ -46,7 +46,15 @@ export class JwtAuthGuard implements CanActivate {
     if (isDevMode()) {
       // Dev mode: bypass JWT, inject dev user
       const req = context.switchToHttp().getRequest()
-      req.user = getDevUser()
+      const devUser = { ...getDevUser() }
+      
+      // Let the frontend override the role using headers if provided
+      const roleOverride = req.headers['x-user-role']
+      if (roleOverride && typeof roleOverride === 'string') {
+        devUser.role = roleOverride
+      }
+      
+      req.user = devUser
       return true
     }
 

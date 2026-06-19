@@ -15,13 +15,24 @@ interface BreadcrumbItem {
 }
 
 export function TopBar() {
-  const { user, logout } = useAuth()
+  const { user, logout, switchRole } = useAuth()
   const { isCollapsed, setCollapsed, isMobileOpen, setMobileOpen } = useSidebar()
   const location = useLocation()
   const navigate = useNavigate()
   const { confirm } = useModals()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+
+  const handleSwitchRole = (role: 'subsystem_admin' | 'opcr_evaluator' | 'staff') => {
+    setProfileAnchorEl(null)
+    switchRole(role)
+    toast({
+      title: 'Role Switched',
+      description: `Active role changed to ${role.replace('_', ' ').toUpperCase()}`,
+      variant: 'default',
+    })
+    navigate('/dashboard')
+  }
 
   // Profile menu anchor
   const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null)
@@ -294,6 +305,33 @@ export function TopBar() {
             <MenuItem onClick={handleSettingsClick} sx={{ py: 1.2, gap: 1.5, fontSize: '12px', fontWeight: 500 }}>
               <Settings style={{ width: 16, height: 16, color: '#6b7280' }} />
               Settings
+            </MenuItem>
+
+            <Box sx={{ px: 2, py: 0.5, borderTop: '1px solid #F3F4F6', mt: 0.5 }}>
+              <Typography sx={{ fontSize: '9px', color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Switch Role
+              </Typography>
+            </Box>
+            <MenuItem
+              onClick={() => handleSwitchRole('subsystem_admin')}
+              selected={user?.role === 'subsystem_admin'}
+              sx={{ py: 0.8, px: 2.5, fontSize: '11px', fontWeight: user?.role === 'subsystem_admin' ? 600 : 400 }}
+            >
+              Subsystem Admin
+            </MenuItem>
+            <MenuItem
+              onClick={() => handleSwitchRole('opcr_evaluator')}
+              selected={user?.role === 'opcr_evaluator'}
+              sx={{ py: 0.8, px: 2.5, fontSize: '11px', fontWeight: user?.role === 'opcr_evaluator' ? 600 : 400 }}
+            >
+              OPCR Evaluator
+            </MenuItem>
+            <MenuItem
+              onClick={() => handleSwitchRole('staff')}
+              selected={user?.role === 'staff'}
+              sx={{ py: 0.8, px: 2.5, fontSize: '11px', fontWeight: user?.role === 'staff' ? 600 : 400 }}
+            >
+              Office Staff
             </MenuItem>
             <MenuItem
               onClick={() => {

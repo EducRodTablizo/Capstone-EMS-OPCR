@@ -4,7 +4,7 @@ import {
   Search, Filter, ChevronDown,
 } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
-import { getAuditLogApi, getTransactionsApi } from '@/api/mockApi'
+import { getAuditLogApi, getTransactionsApi } from '@/api'
 import type { TransactionStatusHistory, ActionType, Transaction } from '@/types'
 import { TopBar } from '@/components/layout/TopBar'
 import {

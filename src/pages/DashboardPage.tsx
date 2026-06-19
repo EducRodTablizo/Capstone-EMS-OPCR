@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, Activity, ArrowRight,
 } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
-import { getDashboardStatsApi, getTransactionsApi } from '@/api/mockApi'
+import { getDashboardStatsApi, getTransactionsApi } from '@/api'
 import type { DashboardStats, Transaction } from '@/types'
 import { TopBar } from '@/components/layout/TopBar'
 import { StatusBadge, SLABadge, DocumentaryBadge } from '@/components/shared/StatusBadge'

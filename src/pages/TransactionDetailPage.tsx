@@ -11,7 +11,7 @@ import {
   updateTransactionStatusApi, updateDocumentaryStatusApi,
   assignTransactionApi, getUsersApi, overrideTimeInApi,
   uploadOverrideDocumentApi,
-} from '@/api/mockApi'
+} from '@/api'
 import type { Transaction, TransactionStatusHistory, User, TransactionStatus, DocumentaryStatus, ActionType } from '@/types'
 import { TopBar } from '@/components/layout/TopBar'
 import { StatusBadge, SLABadge, DocumentaryBadge } from '@/components/shared/StatusBadge'
