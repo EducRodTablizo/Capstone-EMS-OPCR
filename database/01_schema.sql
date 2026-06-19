@@ -25,6 +25,8 @@ CREATE TABLE offices (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+
+
 -- ─── Users (EMS-001, 002, 003) ───────────────────────────────
 -- Synced read-only from ARMS. EMS never creates/edits users.
 
