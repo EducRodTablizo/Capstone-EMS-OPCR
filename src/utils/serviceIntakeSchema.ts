@@ -28,7 +28,7 @@ export interface ServiceIntakeSchema {
 const F = {
   studentId: (): IntakeField => ({
     key: 'student_employee_id', label: 'Student / Employee ID',
-    type: 'text', required: true, placeholder: 'e.g. 2020-12345',
+    type: 'text', required: true, placeholder: 'e.g. 2020-12345-CM-0',
   }),
   program: (): IntakeField => ({
     key: 'program', label: 'Program / Course',
@@ -75,7 +75,7 @@ const F = {
   }),
   referralSource: (required = false): IntakeField => ({
     key: 'referral_source', label: 'Referral From', type: 'text', required,
-    placeholder: 'e.g. PGH, referring physician…',
+    placeholder: 'e.g. Physician, referring physician…',
   }),
   dentalComplaint: (): IntakeField => ({
     key: 'dental_complaint', label: 'Dental Complaint', type: 'textarea', required: true,

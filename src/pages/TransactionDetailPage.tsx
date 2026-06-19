@@ -218,9 +218,12 @@ export function TransactionDetailPage() {
       <TopBar />
 
       <div className="flex-1 min-h-0 overflow-auto p-6 bg-[#F5F7FA]">
-        <Link to="/transactions" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors font-medium">
+        <Link
+          to="/transactions"
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-[#580000] shadow-sm transition-colors hover:bg-slate-50 mb-5"
+        >
           <ArrowLeft className="h-4 w-4" />
-          Back to Transactions
+          Back to Transaction
         </Link>
 
         {/* EMS-025: Completed – Read Only lock notice */}
