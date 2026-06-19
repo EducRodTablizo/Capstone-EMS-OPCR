@@ -120,5 +120,17 @@ INSERT INTO users (id, name, email, role, office_id) VALUES
 ('11000000-0000-0000-0000-000000000009', 'Dr. Ricardo Lim', 'rlim@pup.edu.ph',       'opcr_evaluator',  '00000000-0000-0000-0000-000000000001'),
 -- Sprint 3 demo accounts: Academic Office (password hash: 'demo123' via argon2id in ARMS)
 ('11000000-0000-0000-0000-000000000010', 'Dr. Ana Reyes',   'academic_admin@ems.ph', 'subsystem_admin', '00000000-0000-0000-0000-000000000002'),
-('11000000-0000-0000-0000-000000000011', 'Ben Santos',      'academic_staff@ems.ph', 'staff',           '00000000-0000-0000-0000-000000000002')
+('11000000-0000-0000-0000-000000000011', 'Ben Santos',      'academic_staff@ems.ph', 'staff',           '00000000-0000-0000-0000-000000000002'),
+-- Teachers for Administrative Office
+('22000000-0000-0000-0000-000000000001', 'Dingdong Dantes', 'ddantes_teacher@pup.edu.ph', 'staff', '00000000-0000-0000-0000-000000000001'),
+('22000000-0000-0000-0000-000000000002', 'Joshua Garcia', 'jgarcia_teacher@pup.edu.ph', 'staff', '00000000-0000-0000-0000-000000000001'),
+('22000000-0000-0000-0000-000000000003', 'Mika Salamanca', 'msalamanca_teacher@pup.edu.ph', 'staff', '00000000-0000-0000-0000-000000000001'),
+-- Teachers for Academic Office
+('22000000-0000-0000-0000-000000000004', 'Dingdong Dantes (Acad)', 'ddantes_teacher_acad@pup.edu.ph', 'staff', '00000000-0000-0000-0000-000000000002'),
+('22000000-0000-0000-0000-000000000005', 'Joshua Garcia (Acad)', 'jgarcia_teacher_acad@pup.edu.ph', 'staff', '00000000-0000-0000-0000-000000000002'),
+('22000000-0000-0000-0000-000000000006', 'Mika Salamanca (Acad)', 'msalamanca_teacher_acad@pup.edu.ph', 'staff', '00000000-0000-0000-0000-000000000002'),
+-- Teachers for OSAS
+('22000000-0000-0000-0000-000000000007', 'Dingdong Dantes (OSAS)', 'ddantes_teacher_osas@pup.edu.ph', 'staff', '00000000-0000-0000-0000-000000000003'),
+('22000000-0000-0000-0000-000000000008', 'Joshua Garcia (OSAS)', 'jgarcia_teacher_osas@pup.edu.ph', 'staff', '00000000-0000-0000-0000-000000000003'),
+('22000000-0000-0000-0000-000000000009', 'Mika Salamanca (OSAS)', 'msalamanca_teacher_osas@pup.edu.ph', 'staff', '00000000-0000-0000-0000-000000000003')
 ON CONFLICT (id) DO NOTHING;

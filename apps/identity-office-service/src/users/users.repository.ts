@@ -14,10 +14,13 @@ export class UsersRepository {
       await setRlsContext(client, headers)
 
       const result = await client.query<User>(
-        `SELECT id, name, email, role, office_id, office_code, office_name, is_active, created_at
-         FROM users
-         WHERE office_id = $1 AND is_active = TRUE
-         ORDER BY name`,
+        `SELECT u.id, u.name, u.email, u.role, u.office_id,
+                o.code AS office_code, o.name AS office_name,
+                u.is_active, u.synced_at AS created_at
+         FROM users u
+         LEFT JOIN offices o ON u.office_id = o.id
+         WHERE u.office_id = $1 AND u.is_active = TRUE
+         ORDER BY u.name`,
         [officeId],
       )
       await client.query('COMMIT')
@@ -37,8 +40,13 @@ export class UsersRepository {
       await setRlsContext(client, headers)
 
       const result = await client.query<User>(
-        `SELECT id, name, email, role, office_id, office_code, office_name, is_active, created_at
-         FROM users WHERE is_active = TRUE ORDER BY office_name, name`,
+        `SELECT u.id, u.name, u.email, u.role, u.office_id,
+                o.code AS office_code, o.name AS office_name,
+                u.is_active, u.synced_at AS created_at
+         FROM users u
+         LEFT JOIN offices o ON u.office_id = o.id
+         WHERE u.is_active = TRUE
+         ORDER BY o.name, u.name`,
       )
       await client.query('COMMIT')
       return result.rows

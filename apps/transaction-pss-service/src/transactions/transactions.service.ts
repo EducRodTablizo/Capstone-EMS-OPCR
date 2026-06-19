@@ -75,6 +75,7 @@ export class TransactionsService {
     id: string,
     status: TransactionStatus,
     remarks: string | undefined,
+    overrideDocumentName: string | undefined,
     headers: Headers,
   ): Promise<Transaction> {
     const existing = await this.repo.findById(id, headers)
@@ -86,7 +87,7 @@ export class TransactionsService {
       throw new ForbiddenException('Transaction is locked')
     }
 
-    const txn = await this.repo.updateStatus(id, status, remarks, headers)
+    const txn = await this.repo.updateStatus(id, status, remarks, overrideDocumentName, headers)
 
     this.auditRelay.relay(txn, ActionType.STATUS_CHANGE, {
       id: headers['x-user-id'] ?? '',
@@ -96,6 +97,57 @@ export class TransactionsService {
       oldValue: existing.status,
       newValue: status,
       remarks,
+    })
+
+    return txn
+  }
+
+  async overrideTimeIn(
+    id: string,
+    newTimeIn: string,
+    reason: string,
+    headers: Headers,
+  ): Promise<Transaction> {
+    const existing = await this.repo.findById(id, headers)
+    if (!existing) throw new NotFoundException(`Transaction ${id} not found`)
+    if (existing.status === 'completed') {
+      throw new ForbiddenException('Completed transactions are read-only')
+    }
+
+    const txn = await this.repo.overrideTimeIn(id, newTimeIn, reason, headers)
+
+    this.auditRelay.relay(txn, ActionType.STATUS_CHANGE, {
+      id: headers['x-user-id'] ?? '',
+      name: headers['x-user-name'] ?? '',
+    }, {
+      oldStatus: existing.status,
+      oldValue: existing.time_in,
+      newValue: newTimeIn,
+      remarks: `Time-In Overridden to ${newTimeIn}. Reason: ${reason}`,
+    })
+
+    return txn
+  }
+
+  async uploadOverrideDocument(
+    id: string,
+    documentName: string,
+    headers: Headers,
+  ): Promise<Transaction> {
+    const existing = await this.repo.findById(id, headers)
+    if (!existing) throw new NotFoundException(`Transaction ${id} not found`)
+    if (existing.status === 'completed') {
+      throw new ForbiddenException('Completed transactions are read-only')
+    }
+
+    const txn = await this.repo.updateOverrideDocument(id, documentName, headers)
+
+    this.auditRelay.relay(txn, ActionType.STATUS_CHANGE, {
+      id: headers['x-user-id'] ?? '',
+      name: headers['x-user-name'] ?? '',
+    }, {
+      oldStatus: existing.status,
+      remarks: `Supporting document uploaded: ${documentName}`,
     })
 
     return txn

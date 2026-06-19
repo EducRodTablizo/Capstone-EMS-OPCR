@@ -138,6 +138,7 @@ export class TransactionsRepository {
     id: string,
     status: TransactionStatus,
     remarks: string | undefined,
+    overrideDocumentName: string | undefined,
     headers: Record<string, string | undefined>,
   ): Promise<Transaction> {
     await this.withRls(headers, async (c) => {
@@ -146,9 +147,48 @@ export class TransactionsRepository {
          SET status = $1::transaction_status,
              time_out = CASE WHEN $1 = 'completed' THEN NOW() ELSE time_out END,
              is_locked = CASE WHEN $1 = 'completed' THEN TRUE ELSE is_locked END,
+             override_document_name = COALESCE($2, override_document_name),
+             updated_at = NOW()
+         WHERE id = $3 AND status != 'completed'`,
+        [status, overrideDocumentName ?? null, id],
+      )
+    })
+    return (await this.findById(id, headers))!
+  }
+
+  async overrideTimeIn(
+    id: string,
+    newTimeIn: string,
+    reason: string,
+    headers: Record<string, string | undefined>,
+  ): Promise<Transaction> {
+    await this.withRls(headers, async (c) => {
+      await c.query(
+        `UPDATE transactions
+         SET original_time_in = COALESCE(original_time_in, time_in),
+             time_in = $1::TIMESTAMPTZ,
+             is_overridden = TRUE,
+             override_reason = $2,
+             updated_at = NOW()
+         WHERE id = $3 AND status != 'completed'`,
+        [newTimeIn, reason, id],
+      )
+    })
+    return (await this.findById(id, headers))!
+  }
+
+  async updateOverrideDocument(
+    id: string,
+    documentName: string,
+    headers: Record<string, string | undefined>,
+  ): Promise<Transaction> {
+    await this.withRls(headers, async (c) => {
+      await c.query(
+        `UPDATE transactions
+         SET override_document_name = $1,
              updated_at = NOW()
          WHERE id = $2 AND status != 'completed'`,
-        [status, id],
+        [documentName, id],
       )
     })
     return (await this.findById(id, headers))!

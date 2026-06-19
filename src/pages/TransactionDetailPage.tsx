@@ -892,79 +892,88 @@ export function TransactionDetailPage() {
                   <Box sx={{ position: 'absolute', left: '8px', top: 0, bottom: 0, width: '1px', bgcolor: 'divider' }} />
                   
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    {history.map((h) => {
-                      const Icon = ACTION_ICON[h.action_type] ?? RotateCcw
-                      const hasValueChange = (h.old_value !== null || h.new_value !== null) && h.action_type !== 'CREATE'
-                      return (
-                        <Box key={h.id} sx={{ position: 'relative', pl: 3.5 }}>
-                          {/* Bullet dot */}
-                          <Box sx={{
-                            position: 'absolute',
-                            left: 0,
-                            top: '4px',
-                            width: '16px',
-                            height: '16px',
-                            borderRadius: '50%',
-                            bgcolor: 'background.paper',
-                            border: '2px solid #580000',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 2,
-                          }}>
-                            <Box sx={{ width: '6px', height: '6px', borderRadius: '50%', bgcolor: '#580000' }} />
-                          </Box>
-
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                            {/* Action Row */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                              <Icon style={{ width: 14, height: 14, color: '#64748B', flexShrink: 0 }} />
-                              <Typography sx={{ fontSize: '12.5px', fontWeight: 600, color: 'text.primary' }}>
-                                {getHistoryLabel(h)}
-                              </Typography>
-                              <Chip
-                                label={h.action_type.replace(/_/g, ' ')}
-                                size="small"
-                                sx={{
-                                  fontSize: '9px',
-                                  height: '16px',
-                                  fontWeight: 700,
-                                  bgcolor: 'rgba(88,0,0,0.06)',
-                                  color: '#580000',
-                                  border: '1px solid rgba(88,0,0,0.12)',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.05em',
-                                }}
-                              />
+                    {(() => {
+                      const seen = new Set<string>()
+                      const deduped = history.filter((h) => {
+                        const key = `${h.action_type}-${h.old_value ?? ''}-${h.new_value ?? ''}-${h.remarks ?? ''}-${h.changed_by ?? ''}-${h.changed_by_name ?? ''}`
+                        if (seen.has(key)) return false
+                        seen.add(key)
+                        return true
+                      })
+                      return deduped.map((h) => {
+                        const Icon = ACTION_ICON[h.action_type] ?? RotateCcw
+                        const hasValueChange = (h.old_value !== null || h.new_value !== null) && h.action_type !== 'CREATE'
+                        return (
+                          <Box key={h.id} sx={{ position: 'relative', pl: 3.5 }}>
+                            {/* Bullet dot */}
+                            <Box sx={{
+                              position: 'absolute',
+                              left: 0,
+                              top: '4px',
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              bgcolor: 'background.paper',
+                              border: '2px solid #580000',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              zIndex: 2,
+                            }}>
+                              <Box sx={{ width: '6px', height: '6px', borderRadius: '50%', bgcolor: '#580000' }} />
                             </Box>
 
-                            {/* Actor & Date */}
-                            <Typography sx={{ fontSize: '11px', color: 'text.secondary' }}>
-                              {h.changed_by_name} · {formatDateTime(h.changed_at)}
-                            </Typography>
-
-                            {/* Value Change Box */}
-                            {hasValueChange && (
-                              <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '11px', color: 'text.secondary', fontFamily: 'monospace', bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid', borderColor: 'divider', borderRadius: '4px', px: 1.2, py: 0.5, mt: 0.5, width: 'fit-content' }}>
-                                {h.old_value ?? '—'} <span style={{ color: 'rgba(88,0,0,0.7)', margin: '0 6px' }}>→</span> {h.new_value ?? '—'}
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                              {/* Action Row */}
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                <Icon style={{ width: 14, height: 14, color: '#64748B', flexShrink: 0 }} />
+                                <Typography sx={{ fontSize: '12.5px', fontWeight: 600, color: 'text.primary' }}>
+                                  {getHistoryLabel(h)}
+                                </Typography>
+                                <Chip
+                                  label={h.action_type.replace(/_/g, ' ')}
+                                  size="small"
+                                  sx={{
+                                    fontSize: '9px',
+                                    height: '16px',
+                                    fontWeight: 700,
+                                    bgcolor: 'rgba(88,0,0,0.06)',
+                                    color: '#580000',
+                                    border: '1px solid rgba(88,0,0,0.12)',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                  }}
+                                />
                               </Box>
-                            )}
 
-                            {h.documentary_old !== h.documentary_new && h.action_type === 'DOCUMENTARY_CHANGE' && (
-                              <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontStyle: 'italic' }}>
-                                Docs: {h.documentary_old ?? '—'} → {h.documentary_new}
+                              {/* Actor & Date */}
+                              <Typography sx={{ fontSize: '11px', color: 'text.secondary' }}>
+                                {h.changed_by_name} · {formatDateTime(h.changed_at)}
                               </Typography>
-                            )}
 
-                            {h.remarks && h.action_type !== 'CREATE' && (
-                              <Typography sx={{ fontSize: '12px', color: 'text.secondary', fontStyle: 'italic', mt: 0.5, bgcolor: 'rgba(0,0,0,0.02)', p: 1, borderRadius: '4px', border: '1px solid', borderColor: 'divider', width: '100%' }}>
-                                {h.remarks}
-                              </Typography>
-                            )}
+                              {/* Value Change Box */}
+                              {hasValueChange && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '11px', color: 'text.secondary', fontFamily: 'monospace', bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid', borderColor: 'divider', borderRadius: '4px', px: 1.2, py: 0.5, mt: 0.5, width: 'fit-content' }}>
+                                  {h.old_value ?? '—'} <span style={{ color: 'rgba(88,0,0,0.7)', margin: '0 6px' }}>→</span> {h.new_value ?? '—'}
+                                </Box>
+                              )}
+
+                              {h.documentary_old !== h.documentary_new && h.action_type === 'DOCUMENTARY_CHANGE' && (
+                                <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontStyle: 'italic' }}>
+                                  Docs: {h.documentary_old ?? '—'} → {h.documentary_new}
+                                </Typography>
+                              )}
+
+                              {h.remarks && h.action_type !== 'CREATE' && (
+                                <Typography sx={{ fontSize: '12px', color: 'text.secondary', fontStyle: 'italic', mt: 0.5, bgcolor: 'rgba(0,0,0,0.02)', p: 1, borderRadius: '4px', border: '1px solid', borderColor: 'divider', width: '100%' }}>
+                                  {h.remarks}
+                                </Typography>
+                              )}
+                            </Box>
                           </Box>
-                        </Box>
-                      )
-                    })}
+                        )
+                      })
+                    })()}
                   </Box>
                 </Box>
               </CardContent>

@@ -129,30 +129,14 @@ export async function overrideTimeInApi(
   id: string,
   newTimeIn: string,
   reason: string,
-  documentName: string | null,
+  _documentName: string | null,
   _actingUser: User, // kept for signature compatibility
 ): Promise<Transaction> {
-  // Fetch current transaction
-  const txn = await getTransactionApi(id)
-
-  // Persist the override action as a status update with remarks to log it in audit history
-  try {
-    await apiClient.patch(`/transactions/${id}/status`, {
-      status: txn.status,
-      remarks: `Time-In Overridden to ${newTimeIn}. Reason: ${reason}${documentName ? ` (Doc: ${documentName})` : ''}`,
-    })
-  } catch (err) {
-    console.error('Failed to persist override remarks to backend:', err)
-  }
-
-  // Return the locally updated transaction object with the new time_in
-  return {
-    ...txn,
-    time_in: newTimeIn,
-    is_overridden: true,
-    override_reason: reason,
-    override_document_name: documentName || undefined,
-  }
+  const response = await apiClient.patch<Transaction>(`/transactions/${id}/override`, {
+    new_time_in: newTimeIn,
+    reason: reason,
+  })
+  return response.data
 }
 
 export async function uploadOverrideDocumentApi(
@@ -160,19 +144,8 @@ export async function uploadOverrideDocumentApi(
   documentName: string,
   _actingUser: User, // kept for signature compatibility
 ): Promise<Transaction> {
-  const txn = await getTransactionApi(id)
-
-  try {
-    await apiClient.patch(`/transactions/${id}/status`, {
-      status: txn.status,
-      remarks: `Supporting document uploaded: ${documentName}`,
-    })
-  } catch (err) {
-    console.error('Failed to persist upload remarks to backend:', err)
-  }
-
-  return {
-    ...txn,
+  const response = await apiClient.patch<Transaction>(`/transactions/${id}/override-document`, {
     override_document_name: documentName,
-  }
+  })
+  return response.data
 }

@@ -41,7 +41,18 @@ export class CreateTransactionDto {
 export class UpdateTransactionStatusDto {
   @IsEnum(TransactionStatus) status!: TransactionStatus
   @IsOptional() @IsString() remarks?: string
+  @IsOptional() @IsString() override_document_name?: string
 }
+
+export class OverrideTimeInDto {
+  @IsString() new_time_in!: string
+  @IsString() reason!: string
+}
+
+export class OverrideDocumentDto {
+  @IsString() override_document_name!: string
+}
+
 
 export class UpdateDocumentaryStatusDto {
   @IsEnum(DocumentaryStatus) documentary_status!: DocumentaryStatus

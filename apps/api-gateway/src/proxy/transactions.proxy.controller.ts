@@ -60,6 +60,20 @@ export class TransactionsProxyController {
     return res.status(r.status).json(r.data)
   }
 
+  /** PATCH /api/transactions/:id/override */
+  @Patch('transactions/:id/override')
+  async override(@Param('id') id: string, @Body() body: unknown, @Req() req: Request, @Res() res: Response) {
+    const r = await firstValueFrom(this.http.patch(`${TXN_SVC}/transactions/${id}/override`, body, { headers: this.rls(req) }))
+    return res.status(r.status).json(r.data)
+  }
+
+  /** PATCH /api/transactions/:id/override-document */
+  @Patch('transactions/:id/override-document')
+  async overrideDocument(@Param('id') id: string, @Body() body: unknown, @Req() req: Request, @Res() res: Response) {
+    const r = await firstValueFrom(this.http.patch(`${TXN_SVC}/transactions/${id}/override-document`, body, { headers: this.rls(req) }))
+    return res.status(r.status).json(r.data)
+  }
+
   /** PATCH /api/transactions/:id/documentary-status */
   @Patch('transactions/:id/documentary-status')
   async updateDocumentary(@Param('id') id: string, @Body() body: unknown, @Req() req: Request, @Res() res: Response) {

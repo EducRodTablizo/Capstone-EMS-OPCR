@@ -76,3 +76,15 @@ COMMENT ON COLUMN transactions.is_locked
   IS 'Set TRUE atomically when status → completed. Blocks all further mutations (EMS-025)';
 COMMENT ON COLUMN services.is_na
   IS 'When TRUE, service is hidden from the intake form service selector (EMS-004)';
+
+-- ─── Manual Time-In Override columns ─────────────────────────────────────────
+ALTER TABLE transactions
+  ADD COLUMN IF NOT EXISTS is_overridden BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS override_reason TEXT,
+  ADD COLUMN IF NOT EXISTS override_document_name VARCHAR(500),
+  ADD COLUMN IF NOT EXISTS original_time_in TIMESTAMPTZ;
+
+COMMENT ON COLUMN transactions.is_overridden IS 'True if the time_in of the transaction has been manually overridden';
+COMMENT ON COLUMN transactions.override_reason IS 'The administrative justification reason for overriding the time_in';
+COMMENT ON COLUMN transactions.override_document_name IS 'The filename of the supporting document uploaded to validate the override';
+COMMENT ON COLUMN transactions.original_time_in IS 'The original automatically-recorded time_in of the transaction';

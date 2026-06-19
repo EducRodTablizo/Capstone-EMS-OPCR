@@ -7,6 +7,8 @@ import {
   AssignTransactionDto,
   UpdateTransactionStatusDto,
   UpdateDocumentaryStatusDto,
+  OverrideTimeInDto,
+  OverrideDocumentDto,
 } from '@ems/dto'
 
 @Controller('transactions')
@@ -58,7 +60,27 @@ export class TransactionsController {
     @Body() body: UpdateTransactionStatusDto,
     @Headers() headers: Record<string, string | undefined>,
   ) {
-    return this.svc.updateStatus(id, body.status, body.remarks, headers)
+    return this.svc.updateStatus(id, body.status, body.remarks, body.override_document_name, headers)
+  }
+
+  /** PATCH /transactions/:id/override */
+  @Patch(':id/override')
+  override(
+    @Param('id') id: string,
+    @Body() body: OverrideTimeInDto,
+    @Headers() headers: Record<string, string | undefined>,
+  ) {
+    return this.svc.overrideTimeIn(id, body.new_time_in, body.reason, headers)
+  }
+
+  /** PATCH /transactions/:id/override-document */
+  @Patch(':id/override-document')
+  uploadOverrideDocument(
+    @Param('id') id: string,
+    @Body() body: OverrideDocumentDto,
+    @Headers() headers: Record<string, string | undefined>,
+  ) {
+    return this.svc.uploadOverrideDocument(id, body.override_document_name, headers)
   }
 
   /** PATCH /transactions/:id/documentary-status */

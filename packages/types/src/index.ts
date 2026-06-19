@@ -114,6 +114,10 @@ export interface Transaction {
   remarks: string | null
   intake_data?: Record<string, string> | null
   is_locked: boolean
+  is_overridden?: boolean
+  override_reason?: string | null
+  override_document_name?: string | null
+  original_time_in?: string | null
   created_at: string
   updated_at: string
 }

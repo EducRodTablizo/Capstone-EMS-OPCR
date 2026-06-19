@@ -13,6 +13,7 @@ import { TransactionDetailPage } from './pages/TransactionDetailPage'
 import { SLAReviewPage } from './pages/SLAReviewPage'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
 import { AuditLogPage } from './pages/AuditLogPage'
+import ReportsPage from './pages/ReportsPage'
 
 import { ModalProvider } from './components/shared/ModalContext'
 
@@ -162,6 +163,9 @@ export default function App() {
                         </ProtectedRoute>
                       }
                     />
+
+                    {/* Reports — feature under development */}
+                    <Route path="reports" element={<ReportsPage />} />
                   </Route>
 
                   {/* Catch-all */}
