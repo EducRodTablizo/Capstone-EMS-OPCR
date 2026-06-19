@@ -4,7 +4,7 @@ import type { Service, User, Transaction } from '@/types'
 import type { IntakeField } from '@/utils/serviceIntakeSchema'
 import { getIntakeSchema } from '@/utils/serviceIntakeSchema'
 import { computeSlaDueDate, formatSlaDueDate } from '@/utils/workingCalendar'
-import { createTransactionApi } from '@/api'
+import { createTransactionApi } from '@/api/mockApi'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogFooter, DialogDescription,

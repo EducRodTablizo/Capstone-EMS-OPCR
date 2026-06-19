@@ -1,7 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common'
 import { Pool, PoolClient } from 'pg'
 import { PG_POOL, setRlsContext } from '../database/database.module'
-import type { Transaction } from '@ems/types'
+import { Transaction, TransactionStatus, DocumentaryStatus } from '@ems/types'
+import { CreateTransactionDto } from '@ems/dto'
 
 // Row shape from DB maps directly to Transaction interface
 type TransactionRow = Transaction
@@ -73,14 +74,7 @@ export class TransactionsRepository {
   }
 
   async create(
-    dto: {
-      service_id: string; assigned_to?: string; client_name: string;
-      client_type?: string; student_number?: string; course?: string;
-      year_level?: string; contact_number?: string; organization?: string;
-      remarks?: string; documentation_status?: string;
-      service_specific_data?: Record<string, unknown>;
-      intake_data?: Record<string, string>;
-    },
+    dto: CreateTransactionDto,
     headers: Record<string, string | undefined>,
   ): Promise<Transaction> {
     const client = await this.pool.connect()
@@ -141,7 +135,7 @@ export class TransactionsRepository {
 
   async updateStatus(
     id: string,
-    status: string,
+    status: TransactionStatus,
     remarks: string | undefined,
     headers: Record<string, string | undefined>,
   ): Promise<Transaction> {
@@ -161,7 +155,7 @@ export class TransactionsRepository {
 
   async updateDocumentaryStatus(
     id: string,
-    documentaryStatus: string,
+    documentaryStatus: DocumentaryStatus,
     headers: Record<string, string | undefined>,
   ): Promise<Transaction> {
     await this.withRls(headers, async (c) => {

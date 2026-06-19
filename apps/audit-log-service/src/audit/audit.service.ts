@@ -1,25 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { AuditRepository } from './audit.repository'
 import { ArmsDispatchService } from './arms-dispatch.service'
-import type { TransactionStatusHistory, ActionType, TransactionStatus, DocumentaryStatus } from '@ems/types'
-
-interface RecordAuditDto {
-  transaction_id: string
-  action_type: ActionType
-  new_status: TransactionStatus
-  old_status?: TransactionStatus | null
-  documentary_new?: DocumentaryStatus
-  documentary_old?: DocumentaryStatus | null
-  old_value?: string | null
-  new_value?: string | null
-  changed_by: string
-  changed_by_name: string
-  remarks?: string | null
-  // For ARMS payload enrichment
-  service_name: string
-  client_name: string
-  office_id: string
-}
+import { TransactionStatusHistory, ActionType, TransactionStatus, DocumentaryStatus } from '@ems/types'
+import { RecordAuditDto, AuditLogFilterDto } from '@ems/dto'
 
 @Injectable()
 export class AuditService {
@@ -92,14 +75,7 @@ export class AuditService {
   }
 
   async getAuditLog(
-    filters: {
-      officeId?: string
-      actionType?: string
-      from?: string
-      to?: string
-      page?: number
-      limit?: number
-    },
+    filters: AuditLogFilterDto,
     headers: Record<string, string | undefined>,
   ) {
     return this.repo.findAll(filters, headers)

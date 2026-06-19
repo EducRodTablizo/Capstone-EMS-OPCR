@@ -6,61 +6,28 @@
 import type {
   User, Service, Transaction, TransactionStatusHistory,
   CreateTransactionDto, UpdateTransactionStatusDto, UpdateDocumentaryStatusDto,
-  DashboardStats, LoginDto, LoginResponse,
+  DashboardStats,
 } from '@/types'
 import {
-  MOCK_USERS, MOCK_SERVICES, MOCK_TRANSACTIONS, MOCK_HISTORY, MOCK_CREDENTIALS,
+  MOCK_SERVICES, MOCK_TRANSACTIONS, MOCK_HISTORY,
 } from '@/utils/mockData'
-import { saveToken } from '@/utils/jwt'
-import { elapsedSeconds } from '@/utils/timeUtils'
+import { apiClient } from './client'
 import { computeSlaStatus, isSlaBreached } from '@/utils/slaUtils'
 
 // ─── In-memory store ─────────────────────────────────────────────────────────
-console.log('MOCK API MODE ACTIVE')
-const _users = [...MOCK_USERS]
+
 let _transactions: Transaction[] = [...MOCK_TRANSACTIONS]
 const _history: TransactionStatusHistory[] = [...MOCK_HISTORY]
 
 const delay = (ms = 300) => new Promise<void>((r) => setTimeout(r, ms))
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-
-export async function loginApi(dto: LoginDto): Promise<LoginResponse> {
-  await delay(500)
-  const cred = MOCK_CREDENTIALS[dto.email]
-  if (!cred || cred.password !== dto.password) {
-    throw new Error('Invalid email or password')
-  }
-  const user = _users.find((u) => u.id === cred.userId)
-  if (!user || !user.is_active) throw new Error('User account is inactive')
-
-  // Build a mock JWT (not cryptographically signed — for demo only)
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-  const payload = btoa(JSON.stringify({
-    sub: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    office_id: user.office_id,
-    office_code: user.office_code,
-    office_name: user.office_name,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 28800, // 8 hours
-  }))
-  const signature = btoa('mock_signature')
-  const token = `${header}.${payload}.${signature}`
-
-  saveToken(token)
-  return { access_token: token, user }
-}
-
 // ─── Users (EMS-001) ─────────────────────────────────────────────────────────
 
 export async function getUsersApi(officeId?: string): Promise<User[]> {
-  await delay()
-  return officeId
-    ? _users.filter((u) => u.office_id === officeId && u.is_active)
-    : _users.filter((u) => u.is_active)
+  const response = await apiClient.get<User[]>(
+    officeId ? `/users?officeId=${officeId}` : '/users'
+  )
+  return response.data
 }
 
 // ─── Services ────────────────────────────────────────────────────────────────
@@ -99,11 +66,20 @@ export async function createTransactionApi(
   const service = MOCK_SERVICES.find((s) => s.id === dto.service_id)
   if (!service) throw new Error('Service not found')
 
-  const assignee = dto.assigned_to ? _users.find((u) => u.id === dto.assigned_to) : null
+  let assigneeName: string | null = null
+  if (dto.assigned_to) {
+    try {
+      const usersRes = await apiClient.get<User[]>('/users')
+      const found = usersRes.data.find((u) => u.id === dto.assigned_to)
+      if (found) assigneeName = found.name
+    } catch {
+      assigneeName = dto.assigned_to
+    }
+  }
   const documentaryStatus = dto.documentation_status ?? 'complete'
 
-  const assignedToId = assignee?.id ?? dto.assigned_to ?? null
-  const assignedToName = assignee?.name ?? (dto.assigned_to ?? null)
+  const assignedToId = dto.assigned_to ?? null
+  const assignedToName = assigneeName ?? dto.assigned_to ?? null
 
   const newTxn: Transaction = {
     id: `txn-${Date.now()}`,
@@ -180,7 +156,8 @@ export async function assignTransactionApi(
   const txn = _transactions[idx]
   if (txn.office_id !== actingUser.office_id) throw new Error('Cross-office assignment not allowed')
 
-  const assignee = _users.find((u) => u.id === assignedTo)
+  const usersRes = await apiClient.get<User[]>('/users')
+  const assignee = usersRes.data.find((u) => u.id === assignedTo)
   if (!assignee || assignee.office_id !== txn.office_id) {
     throw new Error('Assignee must be in the same office')
   }
@@ -237,7 +214,9 @@ export async function updateTransactionStatusApi(
 
   if (dto.status === 'completed' && timeOut) {
     // Simple computation: elapsed seconds from time_in to time_out
-    processingTime = elapsedSeconds(txn.time_in)
+    const start = new Date(txn.time_in).getTime()
+    const end = new Date(timeOut).getTime()
+    processingTime = Math.max(0, Math.round((end - start) / 1000))
     slaStatus = computeSlaStatus(processingTime, txn.sla_target_seconds)
     isBreach = isSlaBreached(processingTime, txn.sla_target_seconds)
   }
@@ -250,6 +229,7 @@ export async function updateTransactionStatusApi(
     sla_status: slaStatus,
     is_sla_breached: isBreach,
     is_locked: dto.status === 'completed', // EMS-025: lock atomically on completion
+    override_document_name: dto.override_document_name || txn.override_document_name,
     updated_at: now,
   }
   _transactions[idx] = updated
@@ -378,4 +358,105 @@ export async function getDashboardStatsApi(officeId?: string): Promise<Dashboard
     compliant, non_compliant, pending_computation,
     sla_breach_count, compliance_rate,
   }
+}
+
+export async function overrideTimeInApi(
+  id: string,
+  newTimeIn: string,
+  reason: string,
+  documentName: string | null,
+  actingUser: User,
+): Promise<Transaction> {
+  await delay()
+  const idx = _transactions.findIndex((t) => t.id === id)
+  if (idx === -1) throw new Error('Transaction not found')
+
+  const txn = _transactions[idx]
+  const now = new Date().toISOString()
+  const originalTimeIn = txn.original_time_in || txn.time_in
+
+  // If already completed, recalculate SLA processing time and SLA status
+  let processingTime = txn.processing_time_seconds
+  let slaStatus = txn.sla_status
+  let isBreach = txn.is_sla_breached
+
+  if (txn.status === 'completed' && txn.time_out) {
+    const start = new Date(newTimeIn).getTime()
+    const end = new Date(txn.time_out).getTime()
+    processingTime = Math.max(0, Math.round((end - start) / 1000))
+    slaStatus = computeSlaStatus(processingTime, txn.sla_target_seconds)
+    isBreach = isSlaBreached(processingTime, txn.sla_target_seconds)
+  }
+
+  const updated: Transaction = {
+    ...txn,
+    time_in: newTimeIn,
+    original_time_in: originalTimeIn,
+    is_overridden: true,
+    override_reason: reason,
+    override_document_name: documentName || undefined,
+    processing_time_seconds: processingTime,
+    sla_status: slaStatus,
+    is_sla_breached: isBreach,
+    updated_at: now,
+  }
+
+  _transactions[idx] = updated
+
+  _history.push({
+    id: `h-${Date.now()}`,
+    transaction_id: id,
+    action_type: 'STATUS_CHANGE',
+    old_status: txn.status,
+    new_status: txn.status,
+    documentary_old: txn.documentary_status,
+    documentary_new: txn.documentary_status,
+    old_value: originalTimeIn,
+    new_value: newTimeIn,
+    changed_by: actingUser.id,
+    changed_by_name: actingUser.name,
+    changed_at: now,
+    remarks: `Time-In Overridden: Changed from ${originalTimeIn} to ${newTimeIn}. Reason: ${reason}${documentName ? ` (Doc: ${documentName})` : ' (Pending Document)'}`,
+  })
+
+  return updated
+}
+
+export async function uploadOverrideDocumentApi(
+  id: string,
+  documentName: string,
+  actingUser: User,
+): Promise<Transaction> {
+  await delay()
+  const idx = _transactions.findIndex((t) => t.id === id)
+  if (idx === -1) throw new Error('Transaction not found')
+
+  const txn = _transactions[idx]
+  const now = new Date().toISOString()
+
+  const updated: Transaction = {
+    ...txn,
+    override_document_name: documentName,
+    updated_at: now,
+  }
+
+  _transactions[idx] = updated
+
+  _history.push({
+    id: `h-${Date.now()}`,
+    transaction_id: id,
+    action_type: 'REMARKS_UPDATE',
+    old_status: txn.status,
+    new_status: txn.status,
+    documentary_old: txn.documentary_status,
+    documentary_new: txn.documentary_status,
+    old_value: txn.override_document_name || 'None',
+    new_value: documentName,
+    changed_by: actingUser.id,
+    changed_by_name: actingUser.name,
+    changed_at: now,
+    remarks: `Supporting document uploaded: ${documentName}`,
+  })
+
+  return updated
 }

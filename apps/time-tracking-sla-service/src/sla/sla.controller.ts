@@ -1,5 +1,6 @@
 import { Controller, Post, Body, Logger } from '@nestjs/common'
 import { SlaService } from './sla.service'
+import { PssCallbackDto, LocalSlaComputeDto } from '@ems/dto'
 
 @Controller('sla')
 export class SlaController {
@@ -12,13 +13,7 @@ export class SlaController {
    * Validated by API Gateway (x-pss-callback-secret header checked there).
    */
   @Post('result')
-  handlePssCallback(@Body() body: {
-    transaction_id: string
-    sla_status: string
-    is_breached: boolean
-    computed_at: string
-    pss_response_json?: Record<string, unknown>
-  }) {
+  handlePssCallback(@Body() body: PssCallbackDto) {
     this.logger.log(`[SLA] PSS callback for ${body.transaction_id}: ${body.sla_status}`)
     return this.svc.handlePssCallback(body)
   }
@@ -29,12 +24,7 @@ export class SlaController {
    * (In Phase 4: this will be triggered by a Kafka consumer instead)
    */
   @Post('compute-local')
-  computeLocal(@Body() body: {
-    transaction_id: string
-    time_in: string
-    time_out: string
-    sla_target_seconds: number
-  }) {
+  computeLocal(@Body() body: LocalSlaComputeDto) {
     return this.svc.computeLocal(body)
   }
 }

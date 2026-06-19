@@ -2,6 +2,12 @@ import {
   Controller, Get, Post, Patch, Param, Body, Query, Headers,
 } from '@nestjs/common'
 import { TransactionsService } from './transactions.service'
+import {
+  CreateTransactionDto,
+  AssignTransactionDto,
+  UpdateTransactionStatusDto,
+  UpdateDocumentaryStatusDto,
+} from '@ems/dto'
 
 @Controller('transactions')
 export class TransactionsController {
@@ -28,14 +34,7 @@ export class TransactionsController {
   /** POST /transactions */
   @Post()
   create(
-    @Body() body: {
-      service_id: string; assigned_to?: string; client_name: string;
-      client_type?: string; student_number?: string; course?: string;
-      year_level?: string; contact_number?: string; organization?: string;
-      remarks?: string; documentation_status?: string;
-      service_specific_data?: Record<string, unknown>;
-      intake_data?: Record<string, string>;
-    },
+    @Body() body: CreateTransactionDto,
     @Headers() headers: Record<string, string | undefined>,
   ) {
     return this.svc.createTransaction(body, headers)
@@ -45,7 +44,7 @@ export class TransactionsController {
   @Patch(':id/assignment')
   assign(
     @Param('id') id: string,
-    @Body() body: { assigned_to: string },
+    @Body() body: AssignTransactionDto,
     @Headers() headers: Record<string, string | undefined>,
   ) {
     return this.svc.assignTransaction(id, body.assigned_to, headers)
@@ -55,7 +54,7 @@ export class TransactionsController {
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: string; remarks?: string },
+    @Body() body: UpdateTransactionStatusDto,
     @Headers() headers: Record<string, string | undefined>,
   ) {
     return this.svc.updateStatus(id, body.status, body.remarks, headers)
@@ -65,7 +64,7 @@ export class TransactionsController {
   @Patch(':id/documentary-status')
   updateDocumentary(
     @Param('id') id: string,
-    @Body() body: { documentary_status: string; remarks?: string },
+    @Body() body: UpdateDocumentaryStatusDto,
     @Headers() headers: Record<string, string | undefined>,
   ) {
     return this.svc.updateDocumentaryStatus(id, body.documentary_status, body.remarks, headers)

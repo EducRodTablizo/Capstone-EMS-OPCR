@@ -3,8 +3,9 @@ import { Pool } from 'pg'
 import { PG_POOL } from '../database/database.module'
 import { CalendarService } from './calendar.service'
 import { PssComputeService } from './pss-compute.service'
+import { LocalSlaComputeDto, PssCallbackDto } from '@ems/dto'
 
-interface SlaResult {
+export interface SlaResult {
   transaction_id: string
   sla_status: 'compliant' | 'non_compliant' | 'pending_computation'
   is_sla_breached: boolean
@@ -26,12 +27,7 @@ export class SlaService {
    * Phase 1-3: Local computation using pss_calendar_cache + fn_classify_sla().
    * Phase 4: Offload to PSS via POST /api/sla/compute (async, PSS calls back).
    */
-  async computeLocal(dto: {
-    transaction_id: string
-    time_in: string
-    time_out: string
-    sla_target_seconds: number
-  }): Promise<SlaResult> {
+  async computeLocal(dto: LocalSlaComputeDto): Promise<SlaResult> {
     const timeIn = new Date(dto.time_in)
     const timeOut = new Date(dto.time_out)
 
@@ -72,13 +68,7 @@ export class SlaService {
    * PSS callback handler — PSS sends authoritative SLA result.
    * Overrides local computation with PSS-computed values.
    */
-  async handlePssCallback(dto: {
-    transaction_id: string
-    sla_status: string
-    is_breached: boolean
-    computed_at: string
-    pss_response_json?: Record<string, unknown>
-  }): Promise<void> {
+  async handlePssCallback(dto: PssCallbackDto & { pss_response_json?: Record<string, unknown> }): Promise<void> {
     await this.pool.query(
       `UPDATE transactions
        SET sla_status = $1::sla_status,

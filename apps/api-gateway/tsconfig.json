@@ -18,7 +18,8 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@ems/types": ["../../packages/types/src/index.ts"]
+      "@ems/types": ["../../packages/types/src/index.ts"],
+      "@ems/dto": ["../../packages/dto/src/index.ts"]
     }
   }
 }

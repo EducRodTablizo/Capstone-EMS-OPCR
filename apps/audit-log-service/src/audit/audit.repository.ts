@@ -1,7 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common'
 import { Pool } from 'pg'
 import { PG_POOL, setRlsContext } from '../database/database.module'
-import type { TransactionStatusHistory, ActionType, TransactionStatus, DocumentaryStatus } from '@ems/types'
+import { TransactionStatusHistory, ActionType, TransactionStatus, DocumentaryStatus } from '@ems/types'
+import { AuditLogFilterDto } from '@ems/dto'
 
 type AuditRow = TransactionStatusHistory
 
@@ -57,14 +58,7 @@ export class AuditRepository {
   }
 
   async findAll(
-    filters: {
-      officeId?: string
-      actionType?: string
-      from?: string
-      to?: string
-      page?: number
-      limit?: number
-    },
+    filters: AuditLogFilterDto,
     headers: Record<string, string | undefined>,
   ): Promise<{ data: TransactionStatusHistory[]; total: number }> {
     const client = await this.pool.connect()

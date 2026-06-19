@@ -2,7 +2,8 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { TransactionsRepository } from './transactions.repository'
 import { AuditRelayService } from './audit-relay.service'
 import { ServicesService } from '../services/services.service'
-import type { Transaction } from '@ems/types'
+import { Transaction, TransactionStatus, DocumentaryStatus, ActionType } from '@ems/types'
+import { CreateTransactionDto } from '@ems/dto'
 
 type Headers = Record<string, string | undefined>
 
@@ -25,14 +26,7 @@ export class TransactionsService {
   }
 
   async createTransaction(
-    dto: {
-      service_id: string; assigned_to?: string; client_name: string;
-      client_type?: string; student_number?: string; course?: string;
-      year_level?: string; contact_number?: string; organization?: string;
-      remarks?: string; documentation_status?: string;
-      service_specific_data?: Record<string, unknown>;
-      intake_data?: Record<string, string>;
-    },
+    dto: CreateTransactionDto,
     headers: Headers,
   ): Promise<Transaction> {
     // Validate service exists
@@ -41,7 +35,7 @@ export class TransactionsService {
 
     const txn = await this.repo.create(dto, headers)
 
-    this.auditRelay.relay(txn, 'CREATE', {
+    this.auditRelay.relay(txn, ActionType.CREATE, {
       id: headers['x-user-id'] ?? '',
       name: headers['x-user-name'] ?? '',
     }, {
@@ -65,7 +59,7 @@ export class TransactionsService {
 
     const txn = await this.repo.assign(id, assignedTo, headers)
 
-    this.auditRelay.relay(txn, 'ASSIGNMENT', {
+    this.auditRelay.relay(txn, ActionType.ASSIGNMENT, {
       id: headers['x-user-id'] ?? '',
       name: headers['x-user-name'] ?? '',
     }, {
@@ -79,7 +73,7 @@ export class TransactionsService {
 
   async updateStatus(
     id: string,
-    status: string,
+    status: TransactionStatus,
     remarks: string | undefined,
     headers: Headers,
   ): Promise<Transaction> {
@@ -94,7 +88,7 @@ export class TransactionsService {
 
     const txn = await this.repo.updateStatus(id, status, remarks, headers)
 
-    this.auditRelay.relay(txn, 'STATUS_CHANGE', {
+    this.auditRelay.relay(txn, ActionType.STATUS_CHANGE, {
       id: headers['x-user-id'] ?? '',
       name: headers['x-user-name'] ?? '',
     }, {
@@ -109,7 +103,7 @@ export class TransactionsService {
 
   async updateDocumentaryStatus(
     id: string,
-    documentaryStatus: string,
+    documentaryStatus: DocumentaryStatus,
     remarks: string | undefined,
     headers: Headers,
   ): Promise<Transaction> {
@@ -121,7 +115,7 @@ export class TransactionsService {
 
     const txn = await this.repo.updateDocumentaryStatus(id, documentaryStatus, headers)
 
-    this.auditRelay.relay(txn, 'DOCUMENTARY_CHANGE', {
+    this.auditRelay.relay(txn, ActionType.DOCUMENTARY_CHANGE, {
       id: headers['x-user-id'] ?? '',
       name: headers['x-user-name'] ?? '',
     }, {

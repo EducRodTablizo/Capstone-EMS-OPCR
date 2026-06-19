@@ -3,7 +3,7 @@ import { Pool } from 'pg'
 import { PG_POOL } from '../database/database.module'
 import type { DashboardStats } from '@ems/types'
 
-interface PerformanceByService {
+export interface PerformanceByService {
   service_id: string
   service_name: string
   total: number

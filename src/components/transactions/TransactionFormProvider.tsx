@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Service } from '@/types'
 import { getServiceConfigByName, type ServiceConfig } from '@/config/serviceConfig'
-import type { TransactionFormValues } from './transactionTypes'
+import { baseFormSchema, studentNumberRegex, contactNumberRegex, type TransactionFormValues } from './transactionTypes'
 
 interface TransactionFormContextValue {
   methods: UseFormReturn<TransactionFormValues>
@@ -21,29 +21,47 @@ interface TransactionFormProviderProps {
   children: ReactNode
 }
 
-const studentNumberRegex = /^\d{4}-\d{5}-CM-0$/
-const contactNumberRegex = /^(?:\+63\d{10}|09\d{9})$/
-
-const baseFormSchema = z.object({
-  service_id: z.string().min(1, 'Service is required'),
-  assigned_to: z.string(),
-  client_type: z.enum(['Student', 'Visitor', 'Organization']),
-  client_name: z.string().optional(),
-  client_first_name: z.string().trim().min(1, 'First name is required'),
-  client_middle_name: z.string().optional(),
-  client_surname: z.string().trim().min(1, 'Surname is required'),
-  student_number: z.string(),
-  course: z.string(),
-  year_level: z.string(),
-  contact_number: z.string().trim().min(1, 'Contact number is required').regex(contactNumberRegex, 'Contact number must be 09XXXXXXXXX'),
-  organization: z.string(),
-  remarks: z.string().max(255, 'Remarks cannot exceed 255 characters'),
-  service_specific_data: z.any().optional(),
-})
-
 function buildServiceSpecificSchema(serviceConfig?: ServiceConfig) {
   if (!serviceConfig) {
     return z.any().optional()
+  }
+
+  if (serviceConfig.key === 'EMERGENCY_WITH_REFERRAL') {
+    return z.object({
+      referralSourceType: z.string().trim().min(1, 'Referral source type is required'),
+      hospitalOrSignatoryName: z.string().optional(),
+      referralDateTime: z.string().optional(),
+      verificationCode: z.string().optional(),
+      emergencyLevel: z.string().trim().min(1, 'Emergency level is required'),
+      conditionDescription: z.string().trim().min(1, 'Condition description is required'),
+      referredBy: z.string().trim().min(1, 'Referred by is required'),
+    }).superRefine((data: any, ctx: z.RefinementCtx) => {
+      if (data.referralSourceType === 'Hospital/Clinic' || data.referralSourceType === 'Signed Physical Document') {
+        if (!data.hospitalOrSignatoryName?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Hospital/Signatory name is required',
+            path: ['hospitalOrSignatoryName'],
+          })
+        }
+        if (!data.referralDateTime?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Date and time of referral is required',
+            path: ['referralDateTime'],
+          })
+        }
+      }
+      if (data.referralSourceType === 'Digital Receipt/Code') {
+        if (!data.verificationCode?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Verification code / reference number is required',
+            path: ['verificationCode'],
+          })
+        }
+      }
+    })
   }
 
   const fields: Record<string, z.ZodTypeAny> = {}
@@ -93,48 +111,112 @@ function buildServiceSpecificSchema(serviceConfig?: ServiceConfig) {
   return z.object(fields)
 }
 
-function getValidationSchema(serviceConfig?: ServiceConfig) {
-  type DynamicSchema = z.ZodObject<z.ZodRawShape>
-  let schema: DynamicSchema = baseFormSchema.extend({
+function getValidationSchema(serviceConfig?: ServiceConfig, clientType?: string): z.ZodType<TransactionFormValues, any, any> {
+  const schema = baseFormSchema.extend({
     service_specific_data: buildServiceSpecificSchema(serviceConfig),
-  }) as DynamicSchema
-
-  if (serviceConfig?.clientRequirements?.studentNumber) {
-    schema = schema.extend({
-      student_number: z.string().trim().min(1, 'Student number is required'),
-    }) as DynamicSchema
-  }
-
-  if (serviceConfig?.clientRequirements?.course) {
-    schema = schema.extend({
-      course: z.string().trim().min(1, 'Course / Program is required'),
-    }) as DynamicSchema
-  }
-
-  if (serviceConfig?.clientRequirements?.yearLevel) {
-    schema = schema.extend({
-      year_level: z.string().trim().min(1, 'Year level is required'),
-    }) as DynamicSchema
-  }
-
-  return schema.superRefine((data: unknown, ctx: z.RefinementCtx) => {
-    const d = data as { student_number?: string; client_type?: string; organization?: string }
-    if (d.student_number?.trim() && !studentNumberRegex.test(d.student_number.trim())) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Student number must follow YYYY-XXXXX-CM-0',
-        path: ['student_number'],
-      })
-    }
-
-    if (d.client_type === 'Organization' && !d.organization?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Organization / Institution is required for organization clients',
-        path: ['organization'],
-      })
-    }
   })
+
+  return schema.superRefine((data: any, ctx: z.RefinementCtx) => {
+    // Student Type Validations
+    if (clientType === 'Student') {
+      if (!data.student_number?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Student number is required',
+          path: ['student_number'],
+        })
+      } else if (!studentNumberRegex.test(data.student_number.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Student number must follow YYYY-XXXXX-CM-0',
+          path: ['student_number'],
+        })
+      }
+
+      if (!data.course?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Course / Program is required',
+          path: ['course'],
+        })
+      }
+
+      if (!data.year_level?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Year level is required',
+          path: ['year_level'],
+        })
+      }
+
+      if (!data.contact_number?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Contact number is required',
+          path: ['contact_number'],
+        })
+      } else if (!contactNumberRegex.test(data.contact_number.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Contact number must be 09XXXXXXXXX',
+          path: ['contact_number'],
+        })
+      }
+    }
+
+    // Organization Inside the PUP QC Campus Type Validations
+    if (clientType === 'Organization Inside the PUP QC Campus') {
+      if (!data.organization?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Organization name is required',
+          path: ['organization'],
+        })
+      }
+
+      if (!data.contact_number?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Contact number is required',
+          path: ['contact_number'],
+        })
+      } else if (!contactNumberRegex.test(data.contact_number.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Contact number must be 09XXXXXXXXX',
+          path: ['contact_number'],
+        })
+      }
+    }
+
+    // Visitor Type Validations
+    if (clientType === 'Visitor') {
+      if (data.contact_number?.trim() && !contactNumberRegex.test(data.contact_number.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Contact number must be 09XXXXXXXXX',
+          path: ['contact_number'],
+        })
+      }
+    }
+
+    // Alumni / Faculty / Other Type Validations
+    if (clientType !== 'Student' && clientType !== 'Organization Inside the PUP QC Campus' && clientType !== 'Visitor') {
+      if (!data.contact_number?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Contact number is required',
+          path: ['contact_number'],
+        })
+      } else if (!contactNumberRegex.test(data.contact_number.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Contact number must be 09XXXXXXXXX',
+          path: ['contact_number'],
+        })
+      }
+    }
+  }) as unknown as z.ZodType<TransactionFormValues, any, any>
 }
 
 export function TransactionFormProvider({ services, defaultValues, open, children }: TransactionFormProviderProps) {
@@ -146,8 +228,8 @@ export function TransactionFormProvider({ services, defaultValues, open, childre
       const serviceId = values.service_id
       const selectedService = services.find((service) => service.id === serviceId)
       const selectedServiceConfig = selectedService ? getServiceConfigByName(selectedService.name) : undefined
-      const schema = getValidationSchema(selectedServiceConfig)
-      return zodResolver(schema as z.ZodType<TransactionFormValues>)(values, context, options)
+      const schema = getValidationSchema(selectedServiceConfig, values.client_type)
+      return zodResolver(schema)(values, context, options)
     },
   })
 

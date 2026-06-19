@@ -1,17 +1,43 @@
 // ─── Shared Types — mirrors src/types/index.ts ───────────────────────────────
 // Used by all NestJS microservices via packages/types
 
-export type UserRole = 'subsystem_admin' | 'staff' | 'opcr_evaluator'
-export type OfficeCode = 'ADMIN_OFFICE' | 'ACADEMIC_OFFICE' | 'OSAS'
-export type TransactionStatus = 'pending' | 'in_progress' | 'completed'
-export type DocumentaryStatus = 'complete' | 'incomplete' | 'for_compliance'
-export type SlaStatus = 'compliant' | 'non_compliant' | 'pending_computation'
-export type ActionType =
-  | 'CREATE'
-  | 'STATUS_CHANGE'
-  | 'ASSIGNMENT'
-  | 'DOCUMENTARY_CHANGE'
-  | 'REMARKS_UPDATE'
+export enum UserRole {
+  ADMIN = 'subsystem_admin',
+  STAFF = 'staff',
+  EVALUATOR = 'opcr_evaluator',
+}
+
+export enum OfficeCode {
+  ADMIN_OFFICE = 'ADMIN_OFFICE',
+  ACADEMIC_OFFICE = 'ACADEMIC_OFFICE',
+  OSAS = 'OSAS',
+}
+
+export enum TransactionStatus {
+  PENDING = 'pending',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+}
+
+export enum DocumentaryStatus {
+  COMPLETE = 'complete',
+  INCOMPLETE = 'incomplete',
+  FOR_COMPLIANCE = 'for_compliance',
+}
+
+export enum SlaStatus {
+  COMPLIANT = 'compliant',
+  NON_COMPLIANT = 'non_compliant',
+  PENDING_COMPUTATION = 'pending_computation',
+}
+
+export enum ActionType {
+  CREATE = 'CREATE',
+  STATUS_CHANGE = 'STATUS_CHANGE',
+  ASSIGNMENT = 'ASSIGNMENT',
+  DOCUMENTARY_CHANGE = 'DOCUMENTARY_CHANGE',
+  REMARKS_UPDATE = 'REMARKS_UPDATE',
+}
 
 export interface JwtPayload {
   sub: string
