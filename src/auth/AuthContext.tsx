@@ -19,7 +19,7 @@ interface AuthContextValue {
 }
 
 const DEFAULT_USER: User = {
-  id: 'usr-admin',
+  id: '11000000-0000-0000-0000-000000000001',
   name: 'System Administrator',
   email: 'admin@ems.ph',
   role: 'subsystem_admin',
