@@ -29,25 +29,28 @@ export async function getUsersApi(officeId?: string): Promise<User[]> {
 // ─── Services ────────────────────────────────────────────────────────────────
 
 export async function getServicesApi(officeId?: string): Promise<Service[]> {
-  const response = await apiClient.get<Service[]>(
+  const response = await apiClient.get<Service[] | { data: Service[] }>(
     officeId ? `/services?officeId=${officeId}` : '/services'
   )
-  return response.data
+  const resData = response.data
+  return Array.isArray(resData) ? resData : resData?.data ?? []
 }
 
 // ─── Transactions ────────────────────────────────────────────────────────────
 
 export async function getTransactionsApi(officeId?: string): Promise<Transaction[]> {
-  const response = await apiClient.get<Transaction[]>(
+  const response = await apiClient.get<Transaction[] | { data: Transaction[] }>(
     officeId ? `/transactions?officeId=${officeId}` : '/transactions'
   )
-  return response.data
+  const resData = response.data
+  return Array.isArray(resData) ? resData : resData?.data ?? []
 }
 
 export async function getTransactionApi(id: string): Promise<Transaction> {
   const response = await apiClient.get<Transaction>(`/transactions/${id}`)
   return response.data
 }
+
 
 export async function createTransactionApi(
   dto: CreateTransactionDto,
@@ -89,8 +92,9 @@ export async function updateDocumentaryStatusApi(
 // ─── History ─────────────────────────────────────────────────────────────────
 
 export async function getTransactionHistoryApi(transactionId: string): Promise<TransactionStatusHistory[]> {
-  const response = await apiClient.get<TransactionStatusHistory[]>(`/transactions/${transactionId}/history`)
-  return response.data
+  const response = await apiClient.get<TransactionStatusHistory[] | { data: TransactionStatusHistory[] }>(`/transactions/${transactionId}/history`)
+  const resData = response.data
+  return Array.isArray(resData) ? resData : resData?.data ?? []
 }
 
 // ─── Audit Log ───────────────────────────────────────────────────────────────
@@ -106,8 +110,9 @@ export async function getAuditLogApi(
   if (filters?.to) params.append('to', filters.to)
 
   const qs = params.toString()
-  const response = await apiClient.get<TransactionStatusHistory[]>(`/audit-log${qs ? '?' + qs : ''}`)
-  return response.data
+  const response = await apiClient.get<TransactionStatusHistory[] | { data: TransactionStatusHistory[] }>(`/audit-log${qs ? '?' + qs : ''}`)
+  const resData = response.data
+  return Array.isArray(resData) ? resData : resData?.data ?? []
 }
 
 // ─── Dashboard Stats ─────────────────────────────────────────────────────────

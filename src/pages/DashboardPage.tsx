@@ -132,8 +132,14 @@ export function DashboardPage() {
       getTransactionsApi(officeId),
     ]).then(([s, txns]) => {
       setStats(s)
-      setBreaches(txns.filter((t) => t.is_sla_breached))
-      setRecent(txns.slice(0, 5))
+      const safeTxns = Array.isArray(txns) ? txns : []
+      setBreaches(safeTxns.filter((t) => t.is_sla_breached))
+      const sorted = [...safeTxns].sort((a, b) => new Date(b.time_in).getTime() - new Date(a.time_in).getTime())
+      setRecent(sorted)
+    }).catch((err) => {
+      console.error('Failed to load dashboard data:', err)
+      setBreaches([])
+      setRecent([])
     }).finally(() => setLoading(false))
   }, [user])
 
@@ -411,7 +417,27 @@ export function DashboardPage() {
             </Box>
           </Box>
           <CardContent sx={{ pt: 1, pb: '16px !important' }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              maxHeight: '350px',
+              overflowY: 'auto',
+              pr: 1.5,
+              '&::-webkit-scrollbar': {
+                width: '6px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'rgba(0, 0, 0, 0.03)',
+                borderRadius: '8px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: 'rgba(88, 0, 0, 0.2)',
+                borderRadius: '8px',
+                '&:hover': {
+                  background: 'rgba(88, 0, 0, 0.4)',
+                },
+              },
+            }}>
               {recent.length === 0 ? (
                 <Typography sx={{ fontSize: '13px', color: 'text.secondary', textAlign: 'center', py: 4 }}>
                   No recent transactions yet.

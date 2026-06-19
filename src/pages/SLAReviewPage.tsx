@@ -235,26 +235,52 @@ export function SLAReviewPage() {
                 Compliance by Category
               </Typography>
             </Box>
-            <CardContent sx={{ pt: 1, pb: '24px !important', display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {categoryStats.map(({ cat, total, compliant, rate, avgTime }) => {
-                const color = rate >= 80 ? T.green : rate >= 50 ? T.warning : T.red
-                return (
-                  <Box key={cat}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-                      <Typography sx={{ fontSize: '13.5px', fontWeight: 600 }}>{cat}</Typography>
-                      <Typography sx={{ fontSize: '12px', color: 'text.secondary' }}>
-                        {compliant}/{total} · avg {formatDuration(Math.round(avgTime))}
+            <CardContent sx={{
+              pt: 1,
+              pb: '16px !important',
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '280px',
+              maxHeight: '520px',
+              overflow: 'auto',
+              resize: 'vertical',
+              pr: 1.5,
+              '&::-webkit-scrollbar': {
+                width: '6px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'rgba(0, 0, 0, 0.03)',
+                borderRadius: '8px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: 'rgba(88, 0, 0, 0.2)',
+                borderRadius: '8px',
+                '&:hover': {
+                  background: 'rgba(88, 0, 0, 0.4)',
+                },
+              },
+            }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pb: 3 }}>
+                {categoryStats.map(({ cat, total, compliant, rate, avgTime }) => {
+                  const color = rate >= 80 ? T.green : rate >= 50 ? T.warning : T.red
+                  return (
+                    <Box key={cat}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                        <Typography sx={{ fontSize: '13.5px', fontWeight: 600 }}>{cat}</Typography>
+                        <Typography sx={{ fontSize: '12px', color: 'text.secondary' }}>
+                          {compliant}/{total} · avg {formatDuration(Math.round(avgTime))}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ width: '100%', height: '8px', bgcolor: 'rgba(0,0,0,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <Box sx={{ width: `${rate}%`, height: '100%', bgcolor: color, borderRadius: '4px', transition: 'width 0.5s ease' }} />
+                      </Box>
+                      <Typography sx={{ fontSize: '11px', fontWeight: 700, color, mt: 0.5 }}>
+                        {rate}% Compliance
                       </Typography>
                     </Box>
-                    <Box sx={{ width: '100%', height: '8px', bgcolor: 'rgba(0,0,0,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
-                      <Box sx={{ width: `${rate}%`, height: '100%', bgcolor: color, borderRadius: '4px', transition: 'width 0.5s ease' }} />
-                    </Box>
-                    <Typography sx={{ fontSize: '11px', fontWeight: 700, color, mt: 0.5 }}>
-                      {rate}% Compliance
-                    </Typography>
-                  </Box>
-                )
-              })}
+                  )
+                })}
+              </Box>
             </CardContent>
           </InteractiveCard>
         )}
@@ -323,9 +349,38 @@ export function SLAReviewPage() {
             />
           </Box>
         ) : (
-          <TableContainer component={Paper} sx={{ borderRadius: '12px', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-            <Table sx={{ minWidth: { xs: 'auto', md: 650 } }}>
-              <TableHead sx={{ bgcolor: '#580000' }}>
+          <TableContainer
+            component={Paper}
+            sx={{
+              borderRadius: '12px',
+              border: '1px solid #E5E7EB',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              maxHeight: '440px',
+              overflowY: 'auto',
+              '&::-webkit-scrollbar': {
+                width: '6px',
+                height: '6px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'rgba(0, 0, 0, 0.03)',
+                borderRadius: '8px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: 'rgba(88, 0, 0, 0.2)',
+                borderRadius: '8px',
+                '&:hover': {
+                  background: 'rgba(88, 0, 0, 0.4)',
+                },
+              },
+            }}
+          >
+            <Table stickyHeader sx={{ minWidth: { xs: 'auto', md: 650 } }}>
+              <TableHead sx={{
+                '& th': {
+                  bgcolor: '#580000 !important',
+                  color: 'white !important',
+                }
+              }}>
                 <TableRow>
                   <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px' }}>Service</TableCell>
                   <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px' }}>Client</TableCell>
