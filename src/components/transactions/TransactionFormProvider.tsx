@@ -35,7 +35,15 @@ function buildServiceSpecificSchema(serviceConfig?: ServiceConfig) {
       emergencyLevel: z.string().trim().min(1, 'Emergency level is required'),
       conditionDescription: z.string().trim().min(1, 'Condition description is required'),
       referredBy: z.string().trim().min(1, 'Referred by is required'),
-    }).superRefine((data: any, ctx: z.RefinementCtx) => {
+    }).superRefine((data: {
+      referralSourceType?: string
+      hospitalOrSignatoryName?: string
+      referralDateTime?: string
+      verificationCode?: string
+      emergencyLevel?: string
+      conditionDescription?: string
+      referredBy?: string
+    }, ctx: z.RefinementCtx) => {
       if (data.referralSourceType === 'Hospital/Clinic' || data.referralSourceType === 'Signed Physical Document') {
         if (!data.hospitalOrSignatoryName?.trim()) {
           ctx.addIssue({
@@ -111,12 +119,13 @@ function buildServiceSpecificSchema(serviceConfig?: ServiceConfig) {
   return z.object(fields)
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getValidationSchema(serviceConfig?: ServiceConfig, clientType?: string): z.ZodType<TransactionFormValues, any, any> {
   const schema = baseFormSchema.extend({
     service_specific_data: buildServiceSpecificSchema(serviceConfig),
   })
 
-  return schema.superRefine((data: any, ctx: z.RefinementCtx) => {
+  return schema.superRefine((data: TransactionFormValues, ctx: z.RefinementCtx) => {
     // Student Type Validations
     if (clientType === 'Student') {
       if (!data.student_number?.trim()) {
@@ -216,6 +225,7 @@ function getValidationSchema(serviceConfig?: ServiceConfig, clientType?: string)
         })
       }
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }) as unknown as z.ZodType<TransactionFormValues, any, any>
 }
 

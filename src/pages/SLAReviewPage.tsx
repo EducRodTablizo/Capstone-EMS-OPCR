@@ -284,7 +284,7 @@ export function SLAReviewPage() {
             <Select
               labelId="sla-filter-label"
               value={slaFilter}
-              onChange={(e) => setSlaFilter(e.target.value as any)}
+              onChange={(e) => setSlaFilter(e.target.value as 'all' | 'compliant' | 'non_compliant' | 'breached')}
               label="SLA Status"
               startAdornment={
                 <InputAdornment position="start">

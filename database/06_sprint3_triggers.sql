@@ -18,10 +18,23 @@ BEGIN
 
   -- Block any mutation on an already-locked row
   IF OLD.is_locked = TRUE THEN
-    RAISE EXCEPTION
-      'Transaction % is locked (completed) and cannot be modified. (EMS-025)',
-      OLD.id
-      USING ERRCODE = 'check_violation';
+    -- Allow SLA updates by checking if other columns are unchanged
+    IF NEW.status = OLD.status
+    AND NEW.documentary_status = OLD.documentary_status
+    AND NEW.assigned_to IS NOT DISTINCT FROM OLD.assigned_to
+    AND NEW.client_name = OLD.client_name
+    AND NEW.remarks IS NOT DISTINCT FROM OLD.remarks
+    AND NEW.service_id = OLD.service_id
+    AND NEW.office_id = OLD.office_id
+    AND NEW.created_by = OLD.created_by
+    THEN
+      RETURN NEW;
+    ELSE
+      RAISE EXCEPTION
+        'Transaction % is locked (completed) and cannot be modified. (EMS-025)',
+        OLD.id
+        USING ERRCODE = 'check_violation';
+    END IF;
   END IF;
 
   RETURN NEW;

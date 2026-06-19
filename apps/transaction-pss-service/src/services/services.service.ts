@@ -9,18 +9,20 @@ export class ServicesService {
 
   async getServices(officeId?: string): Promise<Service[]> {
     const query = officeId
-      ? `SELECT id, name, category, client_type, office_id, office_code,
-                sla_target_seconds, sla_display, is_active, is_na,
-                pss_service_code, last_synced_from_pss
-         FROM services
-         WHERE office_id = $1 AND is_active = TRUE AND is_na = FALSE
-         ORDER BY category, name`
-      : `SELECT id, name, category, client_type, office_id, office_code,
-                sla_target_seconds, sla_display, is_active, is_na,
-                pss_service_code, last_synced_from_pss
-         FROM services
-         WHERE is_active = TRUE AND is_na = FALSE
-         ORDER BY category, name`
+      ? `SELECT s.id, s.name, s.category, s.client_type, s.office_id, o.code AS office_code,
+                s.sla_target_seconds, s.sla_display, s.is_active, s.is_na,
+                s.pss_service_code, s.last_synced_from_pss
+         FROM services s
+         JOIN offices o ON s.office_id = o.id
+         WHERE s.office_id = $1 AND s.is_active = TRUE AND s.is_na = FALSE
+         ORDER BY s.category, s.name`
+      : `SELECT s.id, s.name, s.category, s.client_type, s.office_id, o.code AS office_code,
+                s.sla_target_seconds, s.sla_display, s.is_active, s.is_na,
+                s.pss_service_code, s.last_synced_from_pss
+         FROM services s
+         JOIN offices o ON s.office_id = o.id
+         WHERE s.is_active = TRUE AND s.is_na = FALSE
+         ORDER BY s.category, s.name`
 
     const result = await this.pool.query<Service>(
       query,

@@ -5,9 +5,9 @@ import type { ServiceField } from '@/config/serviceConfig'
 import type { TransactionFormValues } from './transactionTypes'
 import { Box, TextField, Select, MenuItem, FormControl, InputLabel, FormHelperText, Grid } from '@mui/material'
 
-function renderField(field: ServiceField, control: Control<TransactionFormValues>, errors: Record<string, unknown>) {
+function renderField(field: ServiceField, control: Control<TransactionFormValues>, errors: Record<string, { message?: string } | undefined>) {
   const fieldName = `service_specific_data.${field.name}` as const
-  const errorMessage = (errors?.[field.name] as { message?: string } | undefined)?.message
+  const errorMessage = errors?.[field.name]?.message
 
   if (field.type === 'textarea') {
     return (
@@ -93,7 +93,7 @@ function renderField(field: ServiceField, control: Control<TransactionFormValues
 export function ServiceDynamicFields() {
   const { methods, selectedServiceConfig, selectedService } = useTransactionForm()
   const { control, formState } = methods
-  const errors = (formState.errors.service_specific_data ?? {}) as Record<string, unknown>
+  const errors = (formState.errors.service_specific_data ?? {}) as Record<string, { message?: string } | undefined>
 
   if (!selectedServiceConfig) {
     return (
@@ -118,15 +118,15 @@ export function ServiceDynamicFields() {
               control={control}
               defaultValue=""
               render={({ field }) => (
-                <FormControl fullWidth error={Boolean((errors?.referralSourceType as any)?.message)}>
+                <FormControl fullWidth error={Boolean(errors?.referralSourceType?.message)}>
                   <InputLabel>Referral Source Type *</InputLabel>
                   <Select value={field.value} onChange={field.onChange} label="Referral Source Type *">
                     <MenuItem value="Hospital/Clinic">Hospital/Clinic</MenuItem>
                     <MenuItem value="Signed Physical Document">Signed Physical Document</MenuItem>
                     <MenuItem value="Digital Receipt/Code">Digital Receipt/Code</MenuItem>
                   </Select>
-                  {(errors?.referralSourceType as any)?.message && (
-                    <FormHelperText>{(errors.referralSourceType as any).message}</FormHelperText>
+                  {errors?.referralSourceType?.message && (
+                    <FormHelperText>{errors.referralSourceType.message}</FormHelperText>
                   )}
                 </FormControl>
               )}
@@ -140,15 +140,15 @@ export function ServiceDynamicFields() {
               control={control}
               defaultValue=""
               render={({ field }) => (
-                <FormControl fullWidth error={Boolean((errors?.emergencyLevel as any)?.message)}>
+                <FormControl fullWidth error={Boolean(errors?.emergencyLevel?.message)}>
                   <InputLabel>Emergency Level *</InputLabel>
                   <Select value={field.value} onChange={field.onChange} label="Emergency Level *">
                     <MenuItem value="Minor">Minor</MenuItem>
                     <MenuItem value="Moderate">Moderate</MenuItem>
                     <MenuItem value="Major">Major</MenuItem>
                   </Select>
-                  {(errors?.emergencyLevel as any)?.message && (
-                    <FormHelperText>{(errors.emergencyLevel as any).message}</FormHelperText>
+                  {errors?.emergencyLevel?.message && (
+                    <FormHelperText>{errors.emergencyLevel.message}</FormHelperText>
                   )}
                 </FormControl>
               )}
@@ -172,8 +172,8 @@ export function ServiceDynamicFields() {
                       placeholder="Enter hospital name or signatory"
                       value={field.value}
                       onChange={field.onChange}
-                      error={Boolean((errors?.hospitalOrSignatoryName as any)?.message)}
-                      helperText={(errors.hospitalOrSignatoryName as any)?.message}
+                      error={Boolean(errors?.hospitalOrSignatoryName?.message)}
+                      helperText={errors.hospitalOrSignatoryName?.message}
                     />
                   )}
                 />
@@ -191,8 +191,8 @@ export function ServiceDynamicFields() {
                       slotProps={{ inputLabel: { shrink: true } }}
                       value={field.value}
                       onChange={field.onChange}
-                      error={Boolean((errors?.referralDateTime as any)?.message)}
-                      helperText={(errors.referralDateTime as any)?.message}
+                      error={Boolean(errors?.referralDateTime?.message)}
+                      helperText={errors.referralDateTime?.message}
                     />
                   )}
                 />
@@ -214,8 +214,8 @@ export function ServiceDynamicFields() {
                   placeholder="Enter verification code"
                   value={field.value}
                   onChange={field.onChange}
-                  error={Boolean((errors?.verificationCode as any)?.message)}
-                  helperText={(errors.verificationCode as any)?.message}
+                  error={Boolean(errors?.verificationCode?.message)}
+                  helperText={errors.verificationCode?.message}
                 />
               )}
             />
@@ -236,8 +236,8 @@ export function ServiceDynamicFields() {
                   placeholder="Doctor or healthcare provider name"
                   value={field.value}
                   onChange={field.onChange}
-                  error={Boolean((errors?.referredBy as any)?.message)}
-                  helperText={(errors.referredBy as any)?.message}
+                  error={Boolean(errors?.referredBy?.message)}
+                  helperText={errors.referredBy?.message}
                 />
               )}
             />
@@ -258,8 +258,8 @@ export function ServiceDynamicFields() {
               placeholder="Describe the clinical condition and reasons for referral…"
               value={field.value}
               onChange={field.onChange}
-              error={Boolean((errors?.conditionDescription as any)?.message)}
-              helperText={(errors.conditionDescription as any)?.message}
+              error={Boolean(errors?.conditionDescription?.message)}
+              helperText={errors.conditionDescription?.message}
             />
           )}
         />

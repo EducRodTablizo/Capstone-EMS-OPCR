@@ -89,7 +89,15 @@ CREATE TABLE transactions (
     is_sla_breached             BOOLEAN NOT NULL DEFAULT FALSE,
 
     client_name                 VARCHAR(300) NOT NULL,
+    client_type                 VARCHAR(100),
+    student_number              VARCHAR(100),
+    course                      VARCHAR(100),
+    year_level                  VARCHAR(50),
+    contact_number              VARCHAR(50),
+    organization                VARCHAR(200),
     remarks                     TEXT,
+    service_specific_data       JSONB,
+    intake_data                 JSONB,
 
     created_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW(),

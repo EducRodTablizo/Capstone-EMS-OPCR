@@ -27,19 +27,19 @@ export class AuditRepository {
       `INSERT INTO transaction_status_history (
         transaction_id, action_type, old_status, new_status,
         documentary_old, documentary_new, old_value, new_value,
-        changed_by, changed_by_name, remarks
+        changed_by, remarks
       ) VALUES (
         $1, $2::action_type,
         $3::transaction_status, $4::transaction_status,
         $5::documentary_status, $6::documentary_status,
-        $7, $8, $9, $10, $11
+        $7, $8, $9, $10
       ) RETURNING id`,
       [
         dto.transaction_id, dto.action_type,
         dto.old_status ?? null, dto.new_status,
         dto.documentary_old ?? null, dto.documentary_new ?? null,
         dto.old_value ?? null, dto.new_value ?? null,
-        dto.changed_by, dto.changed_by_name, dto.remarks ?? null,
+        dto.changed_by, dto.remarks ?? null,
       ],
     )
     return result.rows[0].id
@@ -49,7 +49,7 @@ export class AuditRepository {
     const result = await this.pool.query<AuditRow>(
       `SELECT h.*, u.name AS changed_by_name
        FROM transaction_status_history h
-       LEFT JOIN users u ON h.changed_by = u.id::text
+       LEFT JOIN users u ON h.changed_by = u.id
        WHERE h.transaction_id = $1
        ORDER BY h.changed_at ASC`,
       [transactionId],
@@ -102,9 +102,11 @@ export class AuditRepository {
 
       params.push(limit, offset)
       const dataResult = await client.query<AuditRow>(
-        `SELECT h.*, t.office_id, t.office_name, t.client_name, t.service_name
+        `SELECT h.*, t.office_id, o.name AS office_name, t.client_name, s.name AS service_name
          FROM transaction_status_history h
          JOIN transactions t ON h.transaction_id = t.id
+         JOIN services s ON t.service_id = s.id
+         JOIN offices o ON t.office_id = o.id
          ${where}
          ORDER BY h.changed_at DESC
          LIMIT $${idx++} OFFSET $${idx}`,

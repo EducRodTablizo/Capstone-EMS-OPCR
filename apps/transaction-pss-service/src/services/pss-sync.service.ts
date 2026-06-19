@@ -96,7 +96,7 @@ export class PssSyncService {
             await this.pool.query(
               `INSERT INTO pss_intake_schema_cache (service_id, schema_json)
                VALUES ($1, $2::jsonb)
-               ON CONFLICT (service_id) DO UPDATE SET schema_json = $2::jsonb, cached_at = NOW()`,
+               ON CONFLICT (service_id) DO UPDATE SET schema_json = $2::jsonb, cached_at = NOW(), expires_at = NOW() + INTERVAL '24 hours'`,
               [svcRow.rows[0].id, JSON.stringify(svc.intake_schema)],
             )
           }

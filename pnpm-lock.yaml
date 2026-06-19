@@ -447,6 +447,9 @@ importers:
 
   packages/dto:
     dependencies:
+      '@ems/types':
+        specifier: workspace:*
+        version: link:../types
       class-transformer:
         specifier: ^0.5.0
         version: 0.5.1

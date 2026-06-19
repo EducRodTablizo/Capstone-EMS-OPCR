@@ -135,7 +135,7 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
           year_level: values.year_level?.trim() || undefined,
           contact_number: values.contact_number?.trim() || undefined,
           organization: values.organization?.trim() || undefined,
-          org_level: (values as any).org_level?.trim() || undefined,
+          org_level: values.org_level?.trim() || undefined,
           remarks: values.remarks?.trim() || undefined,
           documentation_status: documentationStatus,
           service_specific_data: values.service_specific_data,
@@ -157,7 +157,7 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
     })
   }
 
-  const handleClose = (_event: {}, reason: 'backdropClick' | 'escapeKeyDown') => {
+  const handleClose = (_event: unknown, reason: 'backdropClick' | 'escapeKeyDown') => {
     if (reason === 'backdropClick') return
     
     confirm({

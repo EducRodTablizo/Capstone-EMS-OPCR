@@ -47,7 +47,18 @@ export async function setRlsContext(
   const officeId = String(headers['x-office-id'] ?? '')
   const role = String(headers['x-user-role'] ?? '')
 
-  await client.query(`SET LOCAL ems.current_office_id = $1`, [officeId])
-  await client.query(`SET LOCAL ems.current_role = $1`, [role])
-  await client.query(`SET LOCAL ems.acting_user_id = $1`, [userId])
+  await client.query(
+    `SELECT set_config('ems.current_office_id', $1, true)`,
+    [officeId],
+  )
+
+  await client.query(
+    `SELECT set_config('ems.current_role', $1, true)`,
+    [role],
+  )
+
+  await client.query(
+    `SELECT set_config('ems.acting_user_id', $1, true)`,
+    [userId],
+  )
 }

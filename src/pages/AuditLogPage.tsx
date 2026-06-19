@@ -10,7 +10,7 @@ import { TopBar } from '@/components/layout/TopBar'
 import {
   Box, Typography, TextField, Select, MenuItem, FormControl, InputLabel,
   Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  InputAdornment, Chip, Card, CardContent
+  InputAdornment, Chip, Card, CardContent, SxProps, Theme
 } from '@mui/material'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -371,7 +371,7 @@ export function AuditLogPage() {
   )
 }
 
-function TableRowCell({ label, width, sx }: { label: string; width?: string; sx?: any }) {
+function TableRowCell({ label, width, sx }: { label: string; width?: string; sx?: SxProps<Theme> }) {
   return (
     <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', ...(width && { width }), ...sx }}>
       {label}

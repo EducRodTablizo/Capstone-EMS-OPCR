@@ -18,20 +18,31 @@ export class DashboardService {
   constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
 
   async getStats(officeId?: string): Promise<DashboardStats> {
-    // Uses existing fn_get_dashboard_stats() PostgreSQL function (from 02_functions.sql)
-    const result = await this.pool.query<DashboardStats>(
-      officeId
-        ? `SELECT * FROM fn_get_dashboard_stats($1)`
-        : `SELECT * FROM fn_get_dashboard_stats(NULL)`,
-      officeId ? [officeId] : undefined,
-    )
-
-    // Fallback: manual aggregation if function doesn't exist yet
-    if (!result.rows[0]) {
-      return this.getStatsManual(officeId)
+    try {
+      const result = await this.pool.query<DashboardStats>(
+        officeId
+          ? `SELECT * FROM fn_get_office_stats($1)`
+          : `SELECT * FROM fn_get_office_stats(NULL)`,
+        officeId ? [officeId] : undefined,
+      )
+      if (result.rows[0]) {
+        const r = result.rows[0] as unknown as Record<string, string | null | undefined>
+        return {
+          total_transactions: parseInt(r.total_transactions ?? '0', 10),
+          pending: parseInt(r.pending ?? '0', 10),
+          in_progress: parseInt(r.in_progress ?? '0', 10),
+          completed: parseInt(r.completed ?? '0', 10),
+          compliant: parseInt(r.compliant ?? '0', 10),
+          non_compliant: parseInt(r.non_compliant ?? '0', 10),
+          pending_computation: parseInt(r.pending_computation ?? '0', 10),
+          sla_breach_count: parseInt(r.sla_breach_count ?? '0', 10),
+          compliance_rate: Math.round(parseFloat(r.compliance_rate || '0')),
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching stats via DB function, falling back to manual aggregation:', e)
     }
-
-    return result.rows[0]
+    return this.getStatsManual(officeId)
   }
 
   private async getStatsManual(officeId?: string): Promise<DashboardStats> {

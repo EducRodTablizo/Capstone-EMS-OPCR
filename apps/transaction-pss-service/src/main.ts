@@ -15,7 +15,9 @@ if (fs.existsSync(rootEnvPath)) {
         if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
           val = val.slice(1, -1)
         }
-        process.env[key] = val
+        if (process.env[key] === undefined) {
+          process.env[key] = val
+        }
       }
     }
   }
@@ -34,3 +36,5 @@ async function bootstrap() {
   console.log(`[Transaction & PSS Service] running on http://localhost:${port}`)
 }
 bootstrap()
+// Trigger restart
+

@@ -15,7 +15,9 @@ if (fs.existsSync(rootEnvPath)) {
         if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
           val = val.slice(1, -1)
         }
-        process.env[key] = val
+        if (process.env[key] === undefined) {
+          process.env[key] = val
+        }
       }
     }
   }
@@ -35,7 +37,9 @@ if (fs.existsSync(localEnvPath)) {
         if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
           val = val.slice(1, -1)
         }
-        process.env[key] = val
+        if (process.env[key] === undefined) {
+          process.env[key] = val
+        }
       }
     }
   }
@@ -52,7 +56,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }))
 
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:5175', 'http://localhost:3000'],
+    origin: [
+      'http://localhost:5173', 'http://localhost:5175', 'http://localhost:3000',
+      'http://127.0.0.1:5173', 'http://127.0.0.1:5175', 'http://127.0.0.1:3000'
+    ],
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -63,3 +70,5 @@ async function bootstrap() {
   console.log(`[API Gateway] running on http://localhost:${port}/api`)
 }
 bootstrap()
+// Trigger restart
+

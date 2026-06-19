@@ -25,8 +25,7 @@ CREATE TABLE IF NOT EXISTS pss_intake_schema_cache (
     schema_json     JSONB NOT NULL,
     schema_version  VARCHAR(50),
     cached_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    expires_at      TIMESTAMPTZ GENERATED ALWAYS AS
-                      (cached_at + INTERVAL '24 hours') STORED
+    expires_at      TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '24 hours'
 );
 
 -- ─── PSS Calendar Cache ───────────────────────────────────────────────────────

@@ -91,13 +91,14 @@ export class TransactionsRepository {
           client_name, client_type, student_number, course, year_level,
           contact_number, organization, remarks, documentary_status,
           service_specific_data, intake_data,
-          status, sla_status, time_in
+          status, sla_status, time_in, sla_target_seconds
         )
         SELECT
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
           COALESCE($13::documentary_status, 'complete'),
           $14::jsonb, $15::jsonb,
-          'pending', 'pending_computation', NOW()
+          'pending', 'pending_computation', NOW(),
+          (SELECT sla_target_seconds FROM services WHERE id = $1)
         RETURNING *`,
         [
           dto.service_id, dto.assigned_to ?? null, createdBy, officeId,

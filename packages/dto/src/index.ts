@@ -11,19 +11,19 @@ export class ValidateTokenDto {
 
 // ─── User ─────────────────────────────────────────────────────────────────────
 export class SyncUserDto {
-  @IsUUID() sub!: string
+  @IsString() sub!: string
   @IsString() name!: string
   @IsString() email!: string
   @IsEnum(UserRole) role!: UserRole
-  @IsUUID() office_id!: string
+  @IsString() office_id!: string
   @IsString() office_code!: string
   @IsString() office_name!: string
 }
 
 // ─── Transaction ─────────────────────────────────────────────────────────────
 export class CreateTransactionDto {
-  @IsUUID() service_id!: string
-  @IsOptional() @IsUUID() assigned_to?: string
+  @IsString() service_id!: string
+  @IsOptional() @IsString() assigned_to?: string
   @IsString() client_name!: string
   @IsOptional() @IsString() client_type?: string
   @IsOptional() @IsString() student_number?: string
@@ -49,12 +49,12 @@ export class UpdateDocumentaryStatusDto {
 }
 
 export class AssignTransactionDto {
-  @IsUUID() assigned_to!: string
+  @IsString() assigned_to!: string
 }
 
 // ─── Audit Record (internal — transaction-pss → audit-log) ───────────────────
 export class RecordAuditDto {
-  @IsUUID() transaction_id!: string
+  @IsString() transaction_id!: string
   @IsEnum(ActionType)
   action_type!: ActionType
   @IsEnum(TransactionStatus) new_status!: TransactionStatus
@@ -65,7 +65,7 @@ export class RecordAuditDto {
   documentary_old?: DocumentaryStatus | null
   @IsOptional() @IsString() old_value?: string | null
   @IsOptional() @IsString() new_value?: string | null
-  @IsUUID() changed_by!: string
+  @IsString() changed_by!: string
   @IsString() changed_by_name!: string
   @IsOptional() @IsString() remarks?: string | null
   // For ARMS dispatch payload
@@ -76,7 +76,7 @@ export class RecordAuditDto {
 
 // ─── Audit Log Filters ────────────────────────────────────────────────────────
 export class AuditLogFilterDto {
-  @IsOptional() @IsUUID() officeId?: string
+  @IsOptional() @IsString() officeId?: string
   @IsOptional() @IsString() actionType?: string
   @IsOptional() @IsDateString() from?: string
   @IsOptional() @IsDateString() to?: string
@@ -86,7 +86,7 @@ export class AuditLogFilterDto {
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 export class DashboardQueryDto {
-  @IsOptional() @IsUUID() officeId?: string
+  @IsOptional() @IsString() officeId?: string
 }
 
 // ─── PSS ─────────────────────────────────────────────────────────────────────
@@ -95,8 +95,8 @@ export class PssSyncDto {
 }
 
 export class SlaComputeDto {
-  @IsUUID() transaction_id!: string
-  @IsUUID() service_id!: string
+  @IsString() transaction_id!: string
+  @IsString() service_id!: string
   @IsString() office_code!: string
   @IsDateString() time_in!: string
   @IsDateString() time_out!: string
@@ -105,14 +105,14 @@ export class SlaComputeDto {
 }
 
 export class PssCallbackDto {
-  @IsUUID() transaction_id!: string
+  @IsString() transaction_id!: string
   @IsEnum(SlaStatus) sla_status!: SlaStatus
   @IsBoolean() is_breached!: boolean
   @IsDateString() computed_at!: string
 }
 
 export class LocalSlaComputeDto {
-  @IsUUID() transaction_id!: string
+  @IsString() transaction_id!: string
   @IsDateString() time_in!: string
   @IsDateString() time_out!: string
   @IsInt() sla_target_seconds!: number

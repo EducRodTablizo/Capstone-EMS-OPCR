@@ -47,6 +47,7 @@ export class TransactionsController {
     @Body() body: AssignTransactionDto,
     @Headers() headers: Record<string, string | undefined>,
   ) {
+    console.log('ASSIGN PARAM ID:', id, 'BODY:', body, 'assigned_to TYPE:', typeof body?.assigned_to);
     return this.svc.assignTransaction(id, body.assigned_to, headers)
   }
 

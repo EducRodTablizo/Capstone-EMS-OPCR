@@ -25,7 +25,22 @@ export async function setRlsContext(
   client: { query: (sql: string, params?: unknown[]) => Promise<unknown> },
   headers: Record<string, string | string[] | undefined>,
 ) {
-  await client.query(`SET LOCAL ems.current_office_id = $1`, [String(headers['x-office-id'] ?? '')])
-  await client.query(`SET LOCAL ems.current_role = $1`, [String(headers['x-user-role'] ?? '')])
-  await client.query(`SET LOCAL ems.acting_user_id = $1`, [String(headers['x-user-id'] ?? '')])
+  const userId = String(headers['x-user-id'] ?? '')
+  const officeId = String(headers['x-office-id'] ?? '')
+  const role = String(headers['x-user-role'] ?? '')
+
+  await client.query(
+    `SELECT set_config('ems.current_office_id', $1, true)`,
+    [officeId],
+  )
+
+  await client.query(
+    `SELECT set_config('ems.current_role', $1, true)`,
+    [role],
+  )
+
+  await client.query(
+    `SELECT set_config('ems.acting_user_id', $1, true)`,
+    [userId],
+  )
 }
