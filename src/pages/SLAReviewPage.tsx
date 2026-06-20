@@ -240,25 +240,7 @@ export function SLAReviewPage() {
               pb: '16px !important',
               display: 'flex',
               flexDirection: 'column',
-              minHeight: '280px',
-              maxHeight: '520px',
-              overflow: 'auto',
-              resize: 'vertical',
               pr: 1.5,
-              '&::-webkit-scrollbar': {
-                width: '6px',
-              },
-              '&::-webkit-scrollbar-track': {
-                background: 'rgba(0, 0, 0, 0.03)',
-                borderRadius: '8px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: 'rgba(88, 0, 0, 0.2)',
-                borderRadius: '8px',
-                '&:hover': {
-                  background: 'rgba(88, 0, 0, 0.4)',
-                },
-              },
             }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pb: 3 }}>
                 {categoryStats.map(({ cat, total, compliant, rate, avgTime }) => {
@@ -355,7 +337,7 @@ export function SLAReviewPage() {
               borderRadius: '12px',
               border: '1px solid #E5E7EB',
               boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              maxHeight: '440px',
+              height: '440px',
               overflowY: 'auto',
               '&::-webkit-scrollbar': {
                 width: '6px',
@@ -396,8 +378,8 @@ export function SLAReviewPage() {
               </TableHead>
               <TableBody>
                 {filtered.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={10} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                  <TableRow style={{ height: '370px' }}>
+                    <TableCell colSpan={10} align="center" sx={{ color: 'text.secondary' }}>
                       No completed transactions match the filter.
                     </TableCell>
                   </TableRow>

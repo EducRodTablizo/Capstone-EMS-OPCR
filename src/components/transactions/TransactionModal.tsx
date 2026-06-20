@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Controller } from 'react-hook-form'
 import type { Service, User, Transaction, CreateTransactionDto } from '@/types'
-import { createTransactionApi } from '@/api'
+import { createTransactionApi, getUsersApi } from '@/api'
 import { ServiceDynamicFields } from './ServiceDynamicFields'
 import { TransactionFormProvider, useTransactionForm } from './TransactionFormProvider'
 import type { TransactionFormValues } from './transactionTypes'
@@ -23,12 +23,12 @@ interface TransactionModalProps {
 }
 
 const ASSIGNED_TO_OPTIONS = [
-  { id: 'usr-1', name: 'Cedrick A asusula' },
-  { id: 'usr-2', name: 'Ryan Donayre' },
-  { id: 'usr-3', name: 'Mark bellen' },
-  { id: 'usr-4', name: 'Rod benedict Tbalizo' },
-  { id: 'usr-5', name: 'renren reas' },
-  { id: 'usr-6', name: 'mikhail reveche' },
+  { id: '11000000-0000-0000-0000-000000000003', name: 'Ana Cruz' },
+  { id: '22000000-0000-0000-0000-000000000001', name: 'Dingdong Dantes' },
+  { id: '11000000-0000-0000-0000-000000000002', name: 'Jose Reyes' },
+  { id: '22000000-0000-0000-0000-000000000002', name: 'Joshua Garcia' },
+  { id: '11000000-0000-0000-0000-000000000001', name: 'Maria Santos' },
+  { id: '22000000-0000-0000-0000-000000000003', name: 'Mika Salamanca' },
 ]
 
 function TransactionModalInner({ open, onOpenChange, services, currentUser, onCreated }: TransactionModalProps) {
@@ -39,6 +39,26 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { confirm, showResult } = useModals()
+
+  const [officeUsers, setOfficeUsers] = useState<Array<{ id: string; name: string }>>(ASSIGNED_TO_OPTIONS)
+
+  useEffect(() => {
+    if (open && currentUser?.office_id) {
+      getUsersApi(currentUser.office_id)
+        .then((users) => {
+          const filtered = users
+            .filter((u) => u.role !== 'opcr_evaluator')
+            .map((u) => ({ id: u.id, name: u.name }))
+            .sort((a, b) => a.name.localeCompare(b.name))
+          if (filtered.length > 0) {
+            setOfficeUsers(filtered)
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to load office users from API, using fallback:', err)
+        })
+    }
+  }, [open, currentUser])
 
   const selectedServiceName = selectedService?.name || ''
   const selectedServiceCategory = selectedService?.category || 'Service'
@@ -428,7 +448,7 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
                         <FormControl fullWidth>
                           <Select value={field.value} onChange={field.onChange}>
                             <MenuItem value="UNASSIGNED">Unassigned</MenuItem>
-                            {ASSIGNED_TO_OPTIONS.map((person) => (
+                            {officeUsers.map((person) => (
                               <MenuItem key={person.id} value={person.id}>
                                 {person.name}
                               </MenuItem>
@@ -760,7 +780,7 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={{ fontSize: '11px', color: '#6B7280', fontWeight: 500 }}>Assigned To</Typography>
                   <Typography sx={{ fontSize: '13px', color: '#111827', fontWeight: 600 }}>
-                    {ASSIGNED_TO_OPTIONS.find(o => o.id === methods.getValues('assigned_to'))?.name || 'Unassigned'}
+                    {officeUsers.find(o => o.id === methods.getValues('assigned_to'))?.name || 'Unassigned'}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>

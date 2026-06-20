@@ -289,15 +289,15 @@ export function AuditLogPage() {
         </Card>
 
         {/* Log Table */}
-        <Card sx={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: 'none', bgcolor: 'white', overflow: 'hidden' }}>
-          <Box sx={{ p: 2, borderBottom: '1px solid #E5E7EB' }}>
+        <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '350px', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: 'none', bgcolor: 'white', overflow: 'hidden' }}>
+          <Box sx={{ p: 2, borderBottom: '1px solid #E5E7EB', flexShrink: 0 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
               Activity Entries
             </Typography>
           </Box>
 
           {loading ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '160px' }}>
+            <Box sx={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
               <Box
                 sx={{
                   width: '32px',
@@ -314,13 +314,13 @@ export function AuditLogPage() {
               />
             </Box>
           ) : paginated.length === 0 ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '120px', color: 'text.secondary' }}>
+            <Box sx={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: '150px', color: 'text.secondary' }}>
               <Typography sx={{ fontSize: '13.5px' }}>No audit log entries found.</Typography>
             </Box>
           ) : (
             <TableContainer
               sx={{
-                maxHeight: '520px',
+                flex: 1,
                 overflowY: 'auto',
                 '&::-webkit-scrollbar': {
                   width: '6px',
