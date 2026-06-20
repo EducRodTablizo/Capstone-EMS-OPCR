@@ -343,7 +343,7 @@ export function TransactionDetailPage() {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#F5F7FA' }}>
       <TopBar />
 
-      <Box sx={{ flex: 1, p: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <Box sx={{ flex: 1, pt: '24px', pb: '24px', pl: '24px', pr: '8px', overflowY: 'auto', scrollbarGutter: 'stable', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
         <Box>
           <Button
             component={Link}

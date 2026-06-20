@@ -52,24 +52,21 @@ export function TopBar() {
   // Dynamic breadcrumb labels based on current path
   const getBreadcrumbs = (): BreadcrumbItem[] => {
     const path = location.pathname
-    const items: BreadcrumbItem[] = [{ label: 'Monitoring Overview', to: '/dashboard' }]
+    const items: BreadcrumbItem[] = [{ label: 'Dashboard', to: '/dashboard' }]
 
     if (path === '/dashboard') {
-      return [{ label: 'Monitoring Overview', to: '/dashboard', active: true }]
+      return [{ label: 'Dashboard', to: '/dashboard', active: true }]
     }
 
     if (path === '/users') {
       items.push({ label: 'User Management', to: '/users' })
       items.push({ label: 'Users', to: '/users' })
     } else if (path === '/transactions') {
-      items.push({ label: 'OPCR', to: '/transactions' })
       items.push({ label: 'Transactions', to: '/transactions' })
     } else if (path.startsWith('/transactions/')) {
-      items.push({ label: 'OPCR', to: '/transactions' })
       items.push({ label: 'Transactions', to: '/transactions' })
       items.push({ label: 'Detail', to: path })
     } else if (path === '/sla-review') {
-      items.push({ label: 'OPCR', to: '/sla-review' })
       items.push({ label: 'Evaluation Period', to: '/sla-review' })
     } else {
       const parts = path.split('/').filter(Boolean)
@@ -120,10 +117,11 @@ export function TopBar() {
         top: 0,
         zIndex: 20,
         height: '64px',
+        width: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        px: '24px',
+        px: '16px',
         bgcolor: '#FFFFFF',
         borderBottom: '1px solid #E5E7EB',
       }}

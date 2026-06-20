@@ -54,7 +54,7 @@ export function TransactionsPage() {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#F5F7FA' }}>
       <TopBar />
 
-      <Box sx={{ flex: 1, p: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <Box sx={{ flex: 1, pt: '24px', pb: '24px', pl: '24px', pr: '8px', overflowY: 'auto', scrollbarGutter: 'stable', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
         {/* Page Title */}
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
@@ -187,18 +187,18 @@ export function TransactionsPage() {
           </Box>
         ) : (
           <TableContainer component={Paper} sx={{ borderRadius: '12px', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Table sx={{ minWidth: { xs: 'auto', md: 650 } }}>
+            <Table sx={{ minWidth: { xs: 'auto', md: 650 }, tableLayout: 'fixed' }}>
               <TableHead sx={{ bgcolor: '#580000' }}>
                 <TableRow>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px' }}>Service</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px' }}>Client</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' } }}>Time In</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' } }}>Assigned To</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px' }}>Status</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', sm: 'table-cell' } }}>Documents</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' } }}>SLA</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' } }}>Duration</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700 }} />
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', width: '22%' }}>Service</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', width: '13%' }}>Client</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' }, width: '12%' }}>Time In</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' }, width: '12%' }}>Assigned To</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', width: '11%' }}>Status</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', sm: 'table-cell' }, width: '11%' }}>Documents</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' }, width: '8%' }}>SLA</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' }, width: '11%' }}>Duration</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, width: '80px' }} />
                 </TableRow>
               </TableHead>
               <TableBody>

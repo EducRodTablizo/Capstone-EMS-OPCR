@@ -300,10 +300,10 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
     >
       <DialogTitle sx={{ p: 0, mb: 2 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography sx={{ fontSize: '18px', fontWeight: 600, fontFamily: '"DM Sans", sans-serif', color: '#111827', lineHeight: 1.2 }}>
+          <Typography sx={{ fontSize: '20px', fontWeight: 500, fontFamily: "'DM Serif Display', Georgia, serif", color: '#111827', lineHeight: 1.2 }}>
             New Service Transaction
           </Typography>
-          <Typography sx={{ color: '#6B7280', fontSize: '13px', fontFamily: '"DM Sans", sans-serif' }}>
+          <Typography sx={{ color: '#6B7280', fontSize: '14px', fontFamily: '"DM Sans", sans-serif' }}>
             Record a new transaction and auto-generate time-in, SLA, and audit timeline.
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>

@@ -41,6 +41,7 @@ function InteractiveCard({ accentColor, children, borderColor }: InteractiveCard
           : '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
         transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
         borderRadius: '12px',
+        flexShrink: 0,
       }}
     >
       {children}
@@ -88,7 +89,7 @@ function StatCard({ title, value, sub, icon: Icon, variant = 'default', accentCo
         },
       }}
     >
-      <CardContent sx={{ p: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column', '&:last-child': { pb: '20px !important' } }}>
+      <CardContent sx={{ p: '16px', flexGrow: 1, display: 'flex', flexDirection: 'column', '&:last-child': { pb: '16px !important' } }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexGrow: 1 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexGrow: 1, alignSelf: 'stretch' }}>
             <Box>
@@ -100,11 +101,11 @@ function StatCard({ title, value, sub, icon: Icon, variant = 'default', accentCo
               </Typography>
             </Box>
             {sub ? (
-              <Typography sx={{ fontSize: '11.5px', color: 'text.secondary', mt: '12px', display: 'block' }}>
+              <Typography sx={{ fontSize: '11.5px', color: 'text.secondary', mt: '8px', display: 'block' }}>
                 {sub}
               </Typography>
             ) : (
-              <Typography sx={{ fontSize: '11.5px', color: 'transparent', mt: '12px', display: 'block', userSelect: 'none' }}>
+              <Typography sx={{ fontSize: '11.5px', color: 'transparent', mt: '8px', display: 'block', userSelect: 'none' }}>
                 &nbsp;
               </Typography>
             )}
@@ -170,7 +171,7 @@ export function DashboardPage() {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#F5F7FA' }}>
       <TopBar />
 
-      <Box sx={{ flex: 1, p: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ flex: 1, pt: '24px', pb: '24px', pl: '24px', pr: '8px', overflowY: 'auto', scrollbarGutter: 'stable', display: 'flex', flexDirection: 'column', gap: 3 }}>
         {/* Page Title */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 2 }}>
           <Box>
@@ -181,7 +182,7 @@ export function DashboardPage() {
         </Box>
 
         {/* ── SECTION 1: Transactions Overview ── */}
-        <Box>
+        <Box sx={{ flexShrink: 0 }}>
           <Typography sx={{
             fontSize: '12px', fontWeight: 600, color: '#6B7280',
             textTransform: 'uppercase', letterSpacing: '0.08em', mb: '12px',
@@ -231,11 +232,11 @@ export function DashboardPage() {
         </Box>
 
         {/* ── SECTION 2: Evaluation Period Overview ── */}
-        <Box>
+        <Box sx={{ flexShrink: 0 }}>
           <Typography sx={{
             fontSize: '12px', fontWeight: 600, color: '#6B7280',
             textTransform: 'uppercase', letterSpacing: '0.08em',
-            mt: '24px', mb: '12px',
+            mt: 0, mb: '12px',
           }}>
             Evaluation Period Overview
           </Typography>
@@ -250,7 +251,7 @@ export function DashboardPage() {
                 transition: 'all 0.2s ease', cursor: 'pointer',
                 '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 4px 12px rgba(0,0,0,0.12)', borderColor: '#D1D5DB', borderTopColor: '#1D9E75' },
               }}>
-                <CardContent sx={{ p: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column', '&:last-child': { pb: '20px !important' } }}>
+                <CardContent sx={{ p: '16px', flexGrow: 1, display: 'flex', flexDirection: 'column', '&:last-child': { pb: '16px !important' } }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexGrow: 1 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexGrow: 1, alignSelf: 'stretch' }}>
                       <Box>
@@ -259,7 +260,7 @@ export function DashboardPage() {
                           {hasRecords ? (stats?.compliant ?? 0) : '_ _'}
                         </Typography>
                       </Box>
-                      <Typography sx={{ fontSize: '11.5px', color: 'transparent', mt: '12px', userSelect: 'none' }}>&nbsp;</Typography>
+                      <Typography sx={{ fontSize: '11.5px', color: 'transparent', mt: '8px', userSelect: 'none' }}>&nbsp;</Typography>
                     </Box>
                     <Box sx={{ p: 1.2, borderRadius: '8px', color: '#1D9E75', bgcolor: 'rgba(29,158,117,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <CheckCircle2 style={{ width: 20, height: 20 }} />
@@ -279,7 +280,7 @@ export function DashboardPage() {
                 transition: 'all 0.2s ease', cursor: 'pointer',
                 '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 4px 12px rgba(0,0,0,0.12)', borderColor: '#D1D5DB', borderTopColor: '#E24B4A' },
               }}>
-                <CardContent sx={{ p: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column', '&:last-child': { pb: '20px !important' } }}>
+                <CardContent sx={{ p: '16px', flexGrow: 1, display: 'flex', flexDirection: 'column', '&:last-child': { pb: '16px !important' } }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexGrow: 1 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexGrow: 1, alignSelf: 'stretch' }}>
                       <Box>
@@ -288,7 +289,7 @@ export function DashboardPage() {
                           {hasRecords ? (stats?.non_compliant ?? 0) : '_ _'}
                         </Typography>
                       </Box>
-                      <Typography sx={{ fontSize: '11.5px', color: 'transparent', mt: '12px', userSelect: 'none' }}>&nbsp;</Typography>
+                      <Typography sx={{ fontSize: '11.5px', color: 'transparent', mt: '8px', userSelect: 'none' }}>&nbsp;</Typography>
                     </Box>
                     <Box sx={{ p: 1.2, borderRadius: '8px', color: '#E24B4A', bgcolor: 'rgba(226,75,74,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <XCircle style={{ width: 20, height: 20 }} />
@@ -308,7 +309,7 @@ export function DashboardPage() {
                 transition: 'all 0.2s ease', cursor: 'pointer',
                 '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 4px 12px rgba(0,0,0,0.12)', borderColor: '#D1D5DB', borderTopColor: '#BA7517' },
               }}>
-                <CardContent sx={{ p: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column', '&:last-child': { pb: '20px !important' } }}>
+                <CardContent sx={{ p: '16px', flexGrow: 1, display: 'flex', flexDirection: 'column', '&:last-child': { pb: '16px !important' } }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexGrow: 1 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexGrow: 1, alignSelf: 'stretch' }}>
                       <Box>
@@ -317,7 +318,7 @@ export function DashboardPage() {
                           {hasRecords ? (stats?.pending_computation ?? 0) : '_ _'}
                         </Typography>
                       </Box>
-                      <Typography sx={{ fontSize: '11.5px', color: 'transparent', mt: '12px', userSelect: 'none' }}>&nbsp;</Typography>
+                      <Typography sx={{ fontSize: '11.5px', color: 'transparent', mt: '8px', userSelect: 'none' }}>&nbsp;</Typography>
                     </Box>
                     <Box sx={{ p: 1.2, borderRadius: '8px', color: '#BA7517', bgcolor: 'rgba(186,117,23,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Clock style={{ width: 20, height: 20 }} />
@@ -393,6 +394,7 @@ export function DashboardPage() {
             borderTop: `4px solid ${T.maroon}`,
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
             borderRadius: '12px',
+            flexShrink: 0,
           }}
         >
           <Box sx={{ p: 3, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

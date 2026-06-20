@@ -97,7 +97,7 @@ export function SLAReviewPage() {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#F5F7FA' }}>
       <TopBar />
 
-      <Box sx={{ flex: 1, p: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ flex: 1, pt: '24px', pb: '24px', pl: '24px', pr: '8px', overflowY: 'auto', scrollbarGutter: 'stable', display: 'flex', flexDirection: 'column', gap: 3 }}>
         {/* Page Title */}
         <Box>
           <Typography variant="h5" sx={{ fontFamily: "'DM Serif Display', Georgia, serif", color: '#0F172A', fontWeight: 500 }}>
@@ -356,7 +356,7 @@ export function SLAReviewPage() {
               },
             }}
           >
-            <Table stickyHeader sx={{ minWidth: { xs: 'auto', md: 650 } }}>
+            <Table stickyHeader sx={{ minWidth: { xs: 'auto', md: 650 }, tableLayout: 'fixed' }}>
               <TableHead sx={{
                 '& th': {
                   bgcolor: '#580000 !important',
@@ -364,16 +364,16 @@ export function SLAReviewPage() {
                 }
               }}>
                 <TableRow>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px' }}>Service</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px' }}>Client</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' } }}>Time In</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' } }}>Time Out</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', sm: 'table-cell' } }}>Actual</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' } }}>SLA Target</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', sm: 'table-cell' } }}>% Used</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' } }}>Status</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px' }}>SLA</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700 }} />
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', width: '20%' }}>Service</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', width: '12%' }}>Client</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' }, width: '11%' }}>Time In</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' }, width: '11%' }}>Time Out</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', sm: 'table-cell' }, width: '8%' }}>Actual</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' }, width: '8%' }}>SLA Target</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', sm: 'table-cell' }, width: '10%' }}>% Used</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', display: { xs: 'none', md: 'table-cell' }, width: '8%' }}>Status</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '13.5px', width: '6%' }}>SLA</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, width: '60px' }} />
                 </TableRow>
               </TableHead>
               <TableBody>

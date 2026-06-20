@@ -44,7 +44,7 @@ export function AppLayout() {
 
   return (
     <SidebarContext.Provider value={{ isCollapsed, setCollapsed, isMobileOpen, setMobileOpen }}>
-      <Box sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: 'background.default', fontFamily: 'var(--font-ui)' }}>
+      <Box sx={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', bgcolor: 'background.default', fontFamily: 'var(--font-ui)' }}>
         {/* Sidebar */}
         <Sidebar />
 

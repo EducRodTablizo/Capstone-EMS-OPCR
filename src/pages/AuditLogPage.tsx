@@ -164,7 +164,7 @@ export function AuditLogPage() {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#F5F7FA' }}>
       <TopBar />
 
-      <Box sx={{ flex: 1, p: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <Box sx={{ flex: 1, pt: '24px', pb: '24px', pl: '24px', pr: '8px', overflowY: 'auto', scrollbarGutter: 'stable', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
         {/* Page Header */}
         <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
           <Box>
@@ -339,7 +339,7 @@ export function AuditLogPage() {
                 },
               }}
             >
-              <Table stickyHeader sx={{ minWidth: { xs: 'auto', md: 650 } }}>
+              <Table stickyHeader sx={{ minWidth: { xs: 'auto', md: 650 }, tableLayout: 'fixed' }}>
                 <TableHead sx={{
                   '& th': {
                     bgcolor: '#580000 !important',
