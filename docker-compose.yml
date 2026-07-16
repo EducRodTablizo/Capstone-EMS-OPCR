@@ -2,36 +2,111 @@ version: '3.9'
 
 # =============================================================================
 # EMS Microservices — Docker Compose
-# Phase 1: PostgreSQL + 5 NestJS services + API Gateway
-# Phase 4: Uncomment kafka + zookeeper blocks
+# Architecture: 1 PostgreSQL container per microservice (true microservice pattern)
+# Each service gets its own isolated database container.
+# Adminer GUI available at http://localhost:8080
 # =============================================================================
 
 services:
-  # ─── Database ───────────────────────────────────────────────────────────────
-  postgres:
+  # ─── Database: Identity & Office (:5434) ────────────────────────────────────
+  postgres-identity:
     image: postgres:15-alpine
-    container_name: ems_postgres
+    container_name: ems_postgres_identity
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ems_db
+      POSTGRES_DB: ems_identity
       POSTGRES_USER: ems_user
       POSTGRES_PASSWORD: ems_pass
     ports:
-      - '5433:5432'
+      - '5434:5432'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
-      - ./database/02_functions.sql:/docker-entrypoint-initdb.d/02_functions.sql
-      - ./database/03_triggers.sql:/docker-entrypoint-initdb.d/03_triggers.sql
-      - ./database/04_seed.sql:/docker-entrypoint-initdb.d/04_seed.sql
-      - ./database/05_sprint3_schema.sql:/docker-entrypoint-initdb.d/05_sprint3_schema.sql
-      - ./database/06_sprint3_triggers.sql:/docker-entrypoint-initdb.d/06_sprint3_triggers.sql
-      - ./database/07_contract_schema.sql:/docker-entrypoint-initdb.d/07_contract_schema.sql
+      - postgres_identity_data:/var/lib/postgresql/data
+      - ./database/init-identity.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ems_user -d ems_db']
+      test: ['CMD-SHELL', 'pg_isready -U ems_user -d ems_identity']
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 15
+
+  # ─── Database: Transaction & PSS (:5435) ────────────────────────────────────
+  postgres-transaction:
+    image: postgres:15-alpine
+    container_name: ems_postgres_transaction
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ems_transaction
+      POSTGRES_USER: ems_user
+      POSTGRES_PASSWORD: ems_pass
+    ports:
+      - '5435:5432'
+    volumes:
+      - postgres_transaction_data:/var/lib/postgresql/data
+      - ./database/init-transaction.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ems_user -d ems_transaction']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  # ─── Database: Time Tracking & SLA (:5436) ──────────────────────────────────
+  postgres-time-tracking:
+    image: postgres:15-alpine
+    container_name: ems_postgres_time_tracking
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ems_time_tracking
+      POSTGRES_USER: ems_user
+      POSTGRES_PASSWORD: ems_pass
+    ports:
+      - '5436:5432'
+    volumes:
+      - postgres_time_tracking_data:/var/lib/postgresql/data
+      - ./database/init-time-tracking.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ems_user -d ems_time_tracking']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  # ─── Database: Audit Log (:5437) ────────────────────────────────────────────
+  postgres-audit-log:
+    image: postgres:15-alpine
+    container_name: ems_postgres_audit_log
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ems_audit_log
+      POSTGRES_USER: ems_user
+      POSTGRES_PASSWORD: ems_pass
+    ports:
+      - '5437:5432'
+    volumes:
+      - postgres_audit_log_data:/var/lib/postgresql/data
+      - ./database/init-audit-log.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ems_user -d ems_audit_log']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  # ─── Database: Dashboard & Reporting (:5438) ────────────────────────────────
+  postgres-dashboard:
+    image: postgres:15-alpine
+    container_name: ems_postgres_dashboard
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ems_dashboard
+      POSTGRES_USER: ems_user
+      POSTGRES_PASSWORD: ems_pass
+    ports:
+      - '5438:5432'
+    volumes:
+      - postgres_dashboard_data:/var/lib/postgresql/data
+      - ./database/init-dashboard.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ems_user -d ems_dashboard']
+      interval: 5s
+      timeout: 5s
+      retries: 15
 
   # ─── Phase 4: Kafka (uncomment when ready) ──────────────────────────────────
   # zookeeper:
@@ -60,8 +135,8 @@ services:
   # ─── API Gateway (:3001) ────────────────────────────────────────────────────
   api-gateway:
     build:
-      context: ./apps/api-gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
     container_name: ems_api_gateway
     restart: unless-stopped
     ports:
@@ -75,101 +150,110 @@ services:
       TIME_SVC_URL: http://time-tracking-sla-service:3004
       DASHBOARD_SVC_URL: http://dashboard-reporting-service:3007
     depends_on:
-      postgres:
+      postgres-identity:
+        condition: service_healthy
+      postgres-transaction:
+        condition: service_healthy
+      postgres-audit-log:
+        condition: service_healthy
+      postgres-time-tracking:
+        condition: service_healthy
+      postgres-dashboard:
         condition: service_healthy
 
   # ─── Identity & Office Service (:3002) ──────────────────────────────────────
   identity-office-service:
     build:
-      context: ./apps/identity-office-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/identity-office-service/Dockerfile
     container_name: ems_identity_svc
     restart: unless-stopped
     ports:
       - '3002:3002'
     environment:
       PORT: 3002
-      DATABASE_URL: postgresql://ems_user:ems_pass@postgres:5432/ems_db
+      DATABASE_URL: postgresql://ems_user:ems_pass@postgres-identity:5432/ems_identity
       ARMS_BASE_URL: ${ARMS_BASE_URL:-http://arms.pup.edu.ph/api}
       ARMS_SERVICE_TOKEN: ${ARMS_SERVICE_TOKEN:-dev_service_token}
     depends_on:
-      postgres:
+      postgres-identity:
         condition: service_healthy
 
   # ─── Transaction & PSS Service (:3003) ──────────────────────────────────────
   transaction-pss-service:
     build:
-      context: ./apps/transaction-pss-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/transaction-pss-service/Dockerfile
     container_name: ems_transaction_svc
     restart: unless-stopped
     ports:
       - '3003:3003'
     environment:
       PORT: 3003
-      DATABASE_URL: postgresql://ems_user:ems_pass@postgres:5432/ems_db
+      DATABASE_URL: postgresql://ems_user:ems_pass@postgres-transaction:5432/ems_transaction
       PSS_BASE_URL: ${PSS_BASE_URL:-http://pss.pup.edu.ph/api}
       PSS_API_KEY: ${PSS_API_KEY:-dev_pss_key}
       AUDIT_SVC_URL: http://audit-log-service:3006
     depends_on:
-      postgres:
+      postgres-transaction:
         condition: service_healthy
 
   # ─── Time Tracking & SLA Service (:3004) ────────────────────────────────────
   time-tracking-sla-service:
     build:
-      context: ./apps/time-tracking-sla-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/time-tracking-sla-service/Dockerfile
     container_name: ems_time_svc
     restart: unless-stopped
     ports:
       - '3004:3004'
     environment:
       PORT: 3004
-      DATABASE_URL: postgresql://ems_user:ems_pass@postgres:5432/ems_db
+      DATABASE_URL: postgresql://ems_user:ems_pass@postgres-time-tracking:5432/ems_time_tracking
       PSS_BASE_URL: ${PSS_BASE_URL:-http://pss.pup.edu.ph/api}
       PSS_API_KEY: ${PSS_API_KEY:-dev_pss_key}
       PSS_SLA_CALLBACK_SECRET: ${PSS_SLA_CALLBACK_SECRET:-dev_callback_secret}
     depends_on:
-      postgres:
+      postgres-time-tracking:
         condition: service_healthy
 
   # ─── Audit Log Service (:3006) ──────────────────────────────────────────────
   audit-log-service:
     build:
-      context: ./apps/audit-log-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/audit-log-service/Dockerfile
     container_name: ems_audit_svc
     restart: unless-stopped
     ports:
       - '3006:3006'
     environment:
       PORT: 3006
-      DATABASE_URL: postgresql://ems_user:ems_pass@postgres:5432/ems_db
+      DATABASE_URL: postgresql://ems_user:ems_pass@postgres-audit-log:5432/ems_audit_log
       ARMS_BASE_URL: ${ARMS_BASE_URL:-http://arms.pup.edu.ph/api}
       ARMS_SERVICE_TOKEN: ${ARMS_SERVICE_TOKEN:-dev_service_token}
       ARMS_DISPATCH_MAX_RETRIES: '3'
     depends_on:
-      postgres:
+      postgres-audit-log:
         condition: service_healthy
 
   # ─── Dashboard & Reporting Service (:3007) ──────────────────────────────────
   dashboard-reporting-service:
     build:
-      context: ./apps/dashboard-reporting-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/dashboard-reporting-service/Dockerfile
     container_name: ems_dashboard_svc
     restart: unless-stopped
     ports:
       - '3007:3007'
     environment:
       PORT: 3007
-      DATABASE_URL: postgresql://ems_user:ems_pass@postgres:5432/ems_db
+      DATABASE_URL: postgresql://ems_user:ems_pass@postgres-dashboard:5432/ems_dashboard
     depends_on:
-      postgres:
+      postgres-dashboard:
         condition: service_healthy
 
   # ─── Adminer Database GUI (:8080) ───────────────────────────────────────────
+  # Connect to any DB by entering container name as server + port 5432
   adminer:
     image: adminer:latest
     container_name: ems_adminer
@@ -177,8 +261,20 @@ services:
     ports:
       - '8080:8080'
     depends_on:
-      postgres:
+      postgres-identity:
+        condition: service_healthy
+      postgres-transaction:
+        condition: service_healthy
+      postgres-audit-log:
+        condition: service_healthy
+      postgres-time-tracking:
+        condition: service_healthy
+      postgres-dashboard:
         condition: service_healthy
 
 volumes:
-  postgres_data:
+  postgres_identity_data:
+  postgres_transaction_data:
+  postgres_time_tracking_data:
+  postgres_audit_log_data:
+  postgres_dashboard_data:

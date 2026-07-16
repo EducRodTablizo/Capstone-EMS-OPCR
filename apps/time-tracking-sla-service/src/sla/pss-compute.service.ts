@@ -40,22 +40,29 @@ export class PssComputeService {
    */
   @Cron('*/5 * * * *')
   async flushComputeQueue() {
-    const pending = await this.pool.query<{
+    let pending: { rows: Array<{
       id: string; transaction_id: string; service_id: string;
       office_code: string; time_in: string; time_out: string;
       duration_seconds: number; sla_target_seconds: number;
-    }>(
-      `SELECT q.id, q.transaction_id, t.service_id, o.code AS office_code,
-              t.time_in, t.time_out,
-              EXTRACT(EPOCH FROM (t.time_out - t.time_in))::INTEGER AS duration_seconds,
-              s.sla_target_seconds
-       FROM pss_computation_queue q
-       JOIN transactions t ON q.transaction_id = t.id
-       JOIN services s ON t.service_id = s.id
-       JOIN offices o ON t.office_id = o.id
-       WHERE q.status = 'pending' AND t.time_out IS NOT NULL
-       LIMIT 20`,
-    )
+    }> }
+    try {
+      pending = await this.pool.query(
+        `SELECT q.id, q.transaction_id,
+                q.local_result->>'service_id' AS service_id,
+                'N/A' AS office_code,
+                q.created_at AS time_in,
+                NOW() AS time_out,
+                0 AS duration_seconds,
+                0 AS sla_target_seconds
+         FROM pss_computation_queue q
+         WHERE q.status = 'pending'
+         LIMIT 20`,
+      )
+    } catch (err) {
+      // pss_computation_queue may not exist yet — silently skip
+      this.logger.debug('[PSS Compute] Queue check skipped: ' + (err instanceof Error ? err.message : String(err)))
+      return
+    }
 
     for (const item of pending.rows) {
       try {

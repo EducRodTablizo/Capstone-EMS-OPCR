@@ -17,7 +17,7 @@ export const PG_POOL = 'PG_POOL'
       provide: PG_POOL,
       useFactory: () => {
         const pool = new Pool({
-          connectionString: process.env.DATABASE_URL,
+          connectionString: process.env.IDENTITY_DATABASE_URL || process.env.DATABASE_URL,
           max: 10,
           idleTimeoutMillis: 30_000,
           connectionTimeoutMillis: 3_000,

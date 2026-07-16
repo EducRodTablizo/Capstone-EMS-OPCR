@@ -485,7 +485,22 @@ export const SERVICE_CONFIG_BY_NAME: Record<string, ServiceConfig> = Object.from
 )
 
 export function getServiceConfigByName(name: string): ServiceConfig | undefined {
-  return SERVICE_CONFIG_BY_NAME[name]
+  const existing = SERVICE_CONFIG_BY_NAME[name]
+  if (existing) {
+    return existing
+  }
+
+  // Dynamic fallback for all services containing "WITH REFERRAL"
+  if (name.toUpperCase().includes('WITH REFERRAL') || name.toUpperCase().includes('WITH_REFERRAL')) {
+    return {
+      ...SERVICE_CONFIG.EMERGENCY_WITH_REFERRAL,
+      key: 'EMERGENCY_WITH_REFERRAL',
+      name: name,
+      displayName: name,
+    }
+  }
+
+  return undefined
 }
 
 export const SERVICE_CONFIG_LIST = Object.values(SERVICE_CONFIG)

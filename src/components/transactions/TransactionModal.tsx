@@ -43,6 +43,23 @@ function TransactionModalInner({ open, onOpenChange, services, currentUser, onCr
   const [officeUsers, setOfficeUsers] = useState<Array<{ id: string; name: string }>>(ASSIGNED_TO_OPTIONS)
 
   useEffect(() => {
+    if (clientType === 'Visitor') {
+      methods.setValue('student_number', '')
+      methods.setValue('course', '')
+      methods.setValue('year_level', '')
+      methods.setValue('organization', '')
+      methods.setValue('org_level', '')
+    } else if (clientType === 'Organization Inside the PUP QC Campus') {
+      methods.setValue('student_number', '')
+      methods.setValue('course', '')
+      methods.setValue('year_level', '')
+    } else {
+      methods.setValue('organization', '')
+      methods.setValue('org_level', '')
+    }
+  }, [clientType, methods])
+
+  useEffect(() => {
     if (open && currentUser?.office_id) {
       getUsersApi(currentUser.office_id)
         .then((users) => {

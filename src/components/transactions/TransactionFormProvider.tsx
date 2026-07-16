@@ -245,6 +245,12 @@ export function TransactionFormProvider({ services, defaultValues, open, childre
 
   const serviceId = methods.watch('service_id')
 
+  useEffect(() => {
+    if (serviceId) {
+      methods.setValue('service_specific_data', {})
+    }
+  }, [serviceId, methods])
+
   const selectedService = useMemo(
     () => services.find((service) => service.id === serviceId),
     [serviceId, services],

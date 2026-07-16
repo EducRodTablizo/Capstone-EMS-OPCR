@@ -8,13 +8,18 @@ export const PG_POOL = 'PG_POOL'
   providers: [
     {
       provide: PG_POOL,
-      useFactory: () =>
-        new Pool({
-          connectionString: process.env.DATABASE_URL,
+      useFactory: () => {
+        const pool = new Pool({
+          connectionString: process.env.TRANSACTION_DATABASE_URL || process.env.DATABASE_URL,
           max: 15,
           idleTimeoutMillis: 30_000,
-          connectionTimeoutMillis: 3_000,
-        }),
+          connectionTimeoutMillis: 5_000,
+        })
+        pool.on('error', (err) => {
+          console.error('[DB Pool] Idle client error (transaction):', err.message)
+        })
+        return pool
+      },
     },
   ],
   exports: [PG_POOL],
