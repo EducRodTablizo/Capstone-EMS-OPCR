@@ -3,6 +3,9 @@ echo ============================================
 echo  EMS Microservices - Start All Services
 echo ============================================
 echo.
+echo Cleaning up previous zombie processes...
+taskkill /f /im node.exe 2>nul
+echo.
 echo Starting API Gateway on port 3001...
 start "API Gateway" cmd /c "cd /d C:\Capstone\Capstone-EMS-OPCR\apps\api-gateway && pnpm start:dev"
 
